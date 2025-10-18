@@ -1,0 +1,70 @@
+O projeto é o seguinte.
+
+É um App de compras.
+
+Nele vou criar meu cadernos de compras.
+
+1 - você pode criar um caderno mensal, quinzenal, semanal ou avulso
+
+2 - você pode criar subcategoria ou algum tipo especial, que reune compras
+
+3 - ao criar um caderno você pode comparar com outro ou pode comparar com
+os últimos (e aí o céu é o limite)
+
+4 - pode criar os produtos, ao invés de ser só texto
+
+5 - o app vai mostrar os preços dos produtos nas últimas cinco compras,
+por isso quando coloca o preço do produto, no banco de dados do produto,
+vamos acrescentar ou atualizar as últimas cinco compras
+
+6 - pode ser compartilhado e acessar por mais de uma pessoa (vou focar
+em eu e meu irmão)
+
+7 - vou usar um setInterval dentro da compra para a pessoa saber se tem outra
+pessoa ou um onSnapshot
+
+8 - até três pessoas podem fazer parte do grupo
+
+
+Páginas:
+1 - página de login
+2 - página inicial (parecida com a de login) se baseando na página dos
+
+games do PS2 e etc. vão ter os grupos dele, os quais ele criou ou aceitou
+participar. também vai ter um botão de mensagens para informar os pedidos
+que ele recebe para fazer parte de um grupo.
+
+3 - dentro do grupo na página inicial vai dizer quando foi a última compra,
+quantas compras fez no mês, qual é a próxima compra, e a diferença entre
+as compras... cada compra vai ter informação. ter botões para criar compra
+e ver compras.
+
+4 - página da lista de compras com filtros ou com botões para outras lista
+de compras (mês, últimas, todas e etc)
+
+5 - página da compra. vai tá informando como vai ser a compra (talvez possa
+editar logo ou só farei isso depois)
+
+6 - página da compra fazendo, ou seja, colocarei quantas unidades do produto
+e k
+
+
+
+* Página de login. Para.
+* Página inicial, com o nome dele, talvez a foto, e os grupos dele e que ele está. Um ícone para informar os pedidos de participação no grupo. E com o botão de criar um novo grupo.
+* Página de criar grupo.
+* Página com info do grupo.
+* Página inicial do grupo. Informar a última compra. A próxima compra. Quanto ele gastou nas últimas três compras. E o saldo foi negativo ou positivo da última compra para a anterior. No fim dois botões, criar compra ou ver compras. E também o botão para ver info do grupo.
+* Página para ver compras. Com filtro na página ou botão para outras páginas. (todas as compras, compras de uma subcategoria, compras do últimos meses, últimas compras)
+* Página da compra:
+** Página para visualização da compra.
+** Página para criar a compra (não sei se posso editar, ou talvez deixar editar disponível antes dela apertar que está fazendo)
+** Página para fazer a compra (colocar os preços, as unidades, os produtos)
+* Página para mudar senha e talvez mudar perfil
+* Página sobre ter amigos.
+
+1 - criar o grupo, com poucas coisas. ter a lista de id das pessoas que fazem parte.
+2 - a compra, ela pode ser mensal, quinzenal, semanal ou avulsa. a compra vai ter subcategoria ou algo especial.
+3 - o produto da compra vai ter nome, preço, unidades, date.
+4 - a subcategoria só vai ter o nome por enquanto.
+5 - vai ter o profile e o users, sendo o users a parte que vai ter amizade.

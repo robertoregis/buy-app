@@ -1,0 +1,19 @@
+body {
+    background-color: rgb(42, 39, 39);
+}
+
+.position-center-x { left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+.position-center-y { top: 50%; -webkit-transform: translateY(-50%); transform: translateY(-50%); }
+.position-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+  
+
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
