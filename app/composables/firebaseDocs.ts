@@ -193,177 +193,178 @@
   // ========================
 
   // Criar ou atualizar item dentro de uma purchase
-  export const saveItem = async (
-    groupId: string,
-    purchaseId: string,
-    purchasePlannedId: string,
-    data: {
-      id?: string // ← se vier, edita; se não vier, cria
-      name: string
-      price: number
-      amount: number
-      created_by: string
-    }
-  ) => {
-    const { firestore } = useFirebase()
-    const now = new Date()
-    const priceFormatted = `R$ ${data.price.toFixed(2).replace(".", ",")}`
+export const saveItem = async (
+  groupId: string,
+  purchaseId: string,
+  purchasePlannedId: string, // Mantenho este nome, mas ele aponta para o ID do Model 'final'
+  data: {
+    id?: string // ← se vier, edita; se não vier, cria
+    name: string
+    price: number
+    amount: number
+    created_by: string // Adicionado
+  }
+) => {
+  const { firestore } = useFirebase()
+  const now = new Date()
+  const priceFormatted = `R$ ${data.price.toFixed(2).replace(".", ",")}`
 
-    // caminho base
-    const itemCollection = collection(
-      firestore,
-      "Groups",
-      groupId,
-      "Purchases",
-      purchaseId,
-      "Models",
-      purchasePlannedId,
-      "Items"
-    )
+  // caminho base (Compra Executada / final)
+  const itemCollection = collection(
+    firestore,
+    "Groups",
+    groupId,
+    "Purchases",
+    purchaseId,
+    "Models",
+    purchasePlannedId, // Este é o purchase_final_id
+    "Items"
+  )
 
-    if (data.id) {
-      // Atualizar item existente
-      const itemRef = doc(itemCollection, data.id)
-      await updateDoc(itemRef, {
-        name: data.name,
-        price: data.price,
-        price_formatted: priceFormatted,
-        amount: data.amount,
-        updated_at: now
-      })
-      return data.id
-    } else {
-      // Criar novo item
-      const itemRef = await addDoc(itemCollection, {
-        name: data.name,
-        price: data.price,
-        price_formatted: priceFormatted,
-        amount: data.amount,
-        created_by: data.created_by,
-        created_at: now,
-        updated_at: now
-      })
-      return itemRef.id
-    }
+  const itemDataToSave = {
+    name: data.name,
+    price: data.price,
+    price_formatted: priceFormatted,
+    amount: data.amount,
+    updated_at: now
   }
 
-  // Deletar item de uma purchase
-  export const deleteItem = async (
-    groupId: string,
-    purchaseId: string,
-    purchaseModelId: string,
-    itemId: string
-  ) => {
-    const { firestore } = useFirebase()
-
-    const itemRef = doc(
-      firestore,
-      "Groups",
-      groupId,
-      "Purchases",
-      purchaseId,
-      "Models",
-      purchaseModelId,
-      "Items",
-      itemId
-    )
-
-    await deleteDoc(itemRef)
-  }
-
-  export const initExecutePurchase = async (
-    groupId: string,
-    purchaseId: string,
-    plannedPurchaseId: string,
-    finalPurchaseId: string,
-    purchaseGeralId: string
-  ) => {
-    const { firestore } = useFirebase()
-    const now = new Date()
-
-    const purchasesCollection = collection(firestore, "Groups", groupId, "Purchases")
-    const modelsCollection = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models")
-    const purchaseGeralCollection = collection(firestore, "Purchases")
-
-    // 1️⃣ Referências das duas compras
-    const purchaseRef = doc(purchasesCollection, purchaseId)
-    const plannedRef = doc(modelsCollection, plannedPurchaseId)
-    const finalRef = doc(modelsCollection, finalPurchaseId)
-    const purchaseGeralRef = doc(purchaseGeralCollection, purchaseGeralId)
-
-    // 2️⃣ Atualiza ambas para marcar como executadas
-    await Promise.all([
-      updateDoc(purchaseRef, { is_execute: true, updated_at: now }),
-      updateDoc(plannedRef, { is_execute: true, updated_at: now }),
-      updateDoc(finalRef, { is_execute: true, updated_at: now }),
-      updateDoc(purchaseGeralRef, { is_execute: true, updated_at: now })
-    ])
-
-    // 3️⃣ Busca os itens da compra planejada
-    const plannedItemsRef = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models", plannedPurchaseId, "Items")
-    const plannedItemsSnapshot = await getDocs(plannedItemsRef)
-
-    if (plannedItemsSnapshot.empty) {
-      console.log("Nenhum item encontrado na compra planejada.")
-      return
-    }
-
-    // 4️⃣ Copia os itens para a compra final
-    const finalItemsRef = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models", finalPurchaseId, "Items")
-
-    const promises = plannedItemsSnapshot.docs.map(async (itemDoc) => {
-      const itemData = itemDoc.data()
-      await addDoc(finalItemsRef, {
-        ...itemData,
-        created_at: now,
-        updated_at: now,
-      })
+  if (data.id) {
+    // Atualizar item existente
+    const itemRef = doc(itemCollection, data.id)
+    await updateDoc(itemRef, itemDataToSave)
+    return data.id
+  } else {
+    // Criar novo item
+    const itemRef = await addDoc(itemCollection, {
+      ...itemDataToSave,
+      created_by: data.created_by,
+      created_at: now,
     })
+    return itemRef.id
+  }
+}
 
-    await Promise.all(promises)
+// Deletar item de uma purchase
+export const deleteItem = async (
+  groupId: string,
+  purchaseId: string,
+  purchaseModelId: string,
+  itemId: string
+) => {
+  const { firestore } = useFirebase()
 
-    console.log("✅ Compra executada com sucesso! Itens copiados para a versão final.")
+  const itemRef = doc(
+    firestore,
+    "Groups",
+    groupId,
+    "Purchases",
+    purchaseId,
+    "Models",
+    purchaseModelId,
+    "Items",
+    itemId
+  )
+
+  await deleteDoc(itemRef)
+}
+
+export const initExecutePurchase = async (
+  groupId: string,
+  purchaseId: string,
+  plannedPurchaseId: string,
+  finalPurchaseId: string,
+  purchaseGeralId: string,
+  initiatorUserId: string // Adicionei o ID do iniciador para setar o created_by inicial
+) => {
+  const { firestore } = useFirebase()
+  const now = new Date()
+
+  const purchasesCollection = collection(firestore, "Groups", groupId, "Purchases")
+  const modelsCollection = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models")
+  const purchaseGeralCollection = collection(firestore, "Purchases")
+
+  // 1️⃣ Referências das duas compras
+  const purchaseRef = doc(purchasesCollection, purchaseId)
+  const plannedRef = doc(modelsCollection, plannedPurchaseId)
+  const finalRef = doc(modelsCollection, finalPurchaseId)
+  const purchaseGeralRef = doc(purchaseGeralCollection, purchaseGeralId)
+
+  // 2️⃣ Atualiza ambas para marcar como executadas
+  await Promise.all([
+    updateDoc(purchaseRef, { is_execute: true, updated_at: now }),
+    updateDoc(plannedRef, { is_execute: true, updated_at: now }),
+    updateDoc(finalRef, { is_execute: true, updated_at: now }),
+    updateDoc(purchaseGeralRef, { is_execute: true, updated_at: now })
+  ])
+
+  // 3️⃣ Busca os itens da compra planejada
+  const plannedItemsRef = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models", plannedPurchaseId, "Items")
+  const plannedItemsSnapshot = await getDocs(plannedItemsRef)
+
+  if (plannedItemsSnapshot.empty) {
+    console.log("Nenhum item encontrado na compra planejada.")
+    return
   }
 
-  export const finishedPurchase = async (
-    groupId: string,
-    purchaseId: string,
-    finalPurchaseId: string,
-    plannedPurchaseId: string,
-    amount: number,
-    price: number,
-    purchaseGeralId: string
-  ) => {
-    const { firestore } = useFirebase()
-    const now = new Date()
+  // 4️⃣ Copia os itens para a compra final (Executada)
+  const finalItemsRef = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models", finalPurchaseId, "Items")
 
-    const purchasesCollection = collection(firestore, "Groups", groupId, "Purchases")
-    const modelsCollection = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models")
-    const purchaseGeralCollection = collection(firestore, "Purchases")
+  const promises = plannedItemsSnapshot.docs.map(async (itemDoc) => {
+    const itemData = itemDoc.data()
+    // CRUCIAL: Adiciona o created_by ao item copiado (Será o ID do usuário que INICIOU a execução)
+    await addDoc(finalItemsRef, {
+      ...itemData,
+      created_by: initiatorUserId, // Define o criador inicial
+      created_at: now,
+      updated_at: now,
+    })
+  })
 
-    // 1️⃣ Referências das duas compras
-    const purchaseRef = doc(purchasesCollection, purchaseId)
-    const plannedRef = doc(modelsCollection, plannedPurchaseId)
-    const finalRef = doc(modelsCollection, finalPurchaseId)
-    const purchaseGeralRef = doc(purchaseGeralCollection, purchaseGeralId)
-    const priceFormatted = `R$ ${price.toFixed(2).replace(".", ",")}`
-    // 2️⃣ Atualiza ambas para marcar como finalizadas
-    await Promise.all([
-      updateDoc(plannedRef, { is_in_progress: true, is_closed: true, updated_at: now }),
-      updateDoc(finalRef, { is_in_progress: true, is_closed: true, updated_at: now, final_price: price, final_amount: amount, final_price_formatted: priceFormatted }),
-      updateDoc(purchaseRef, { 
-        is_in_progress: true,
-        is_closed: true,
-        updated_at: now,
-        final_price: price,
-        final_amount: amount,
-        final_price_formatted: priceFormatted
-      }),
-      updateDoc(purchaseGeralRef, { is_in_progress: true, is_closed: true, updated_at: now }),
-    ])
+  await Promise.all(promises)
 
-    console.log("✅ Compra finalizada com sucesso!")
-  }
+  console.log("✅ Compra executada com sucesso! Itens copiados para a versão final.")
+}
+
+export const finishedPurchase = async (
+  groupId: string,
+  purchaseId: string,
+  finalPurchaseId: string,
+  plannedPurchaseId: string,
+  amount: number,
+  price: number,
+  purchaseGeralId: string
+) => {
+  const { firestore } = useFirebase()
+  const now = new Date()
+
+  const purchasesCollection = collection(firestore, "Groups", groupId, "Purchases")
+  const modelsCollection = collection(firestore, "Groups", groupId, "Purchases", purchaseId, "Models")
+  const purchaseGeralCollection = collection(firestore, "Purchases")
+
+  // 1️⃣ Referências das duas compras
+  const purchaseRef = doc(purchasesCollection, purchaseId)
+  const plannedRef = doc(modelsCollection, plannedPurchaseId)
+  const finalRef = doc(modelsCollection, finalPurchaseId)
+  const purchaseGeralRef = doc(purchaseGeralCollection, purchaseGeralId)
+  const priceFormatted = `R$ ${price.toFixed(2).replace(".", ",")}`
+  // 2️⃣ Atualiza ambas para marcar como finalizadas
+  await Promise.all([
+    updateDoc(plannedRef, { is_in_progress: true, is_closed: true, updated_at: now }),
+    updateDoc(finalRef, { is_in_progress: true, is_closed: true, updated_at: now, final_price: price, final_amount: amount, final_price_formatted: priceFormatted }),
+    updateDoc(purchaseRef, {
+      is_in_progress: true,
+      is_closed: true,
+      updated_at: now,
+      final_price: price,
+      final_amount: amount,
+      final_price_formatted: priceFormatted
+    }),
+    updateDoc(purchaseGeralRef, { is_in_progress: true, is_closed: true, updated_at: now }),
+  ])
+
+  console.log("✅ Compra finalizada com sucesso!")
+}
 
   export const plannedPurchase = async (
     groupId: string,

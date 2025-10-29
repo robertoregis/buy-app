@@ -9,7 +9,6 @@
     import { saveItem, deleteItem, plannedPurchase, updatePurchaseMemberInOnline } from '../../../../../composables/firebaseDocs.js';
 
     const params = useParams();
-    type MemberActivity = { id: string, activity: any };
 
     definePageMeta({
         layout: 'dashboard'
@@ -25,6 +24,9 @@
     const purchaseItens = ref<any[]>([])
     const itensDeleted = ref<any[]>([])
     const myInterval = ref<any>(null)
+
+    // Adicione esta linha junto com as outras declarações de ref (purchase, loading, etc.)
+    const membersData = ref<any>({})
 
     // O formdata agora é um array de objetos
     const formdata = ref<any[]>([
@@ -101,7 +103,8 @@
     const getPurchase = async () => {
         const purchaseRef = doc(firestore, "Groups", authentication.group.id, "Purchases", route.params.purchaseId);
 
-        const unsubscribe = onSnapshot(purchaseRef, (purchaseSnap) => {
+        // Torne o callback assíncrono para usar await
+        const unsubscribe = onSnapshot(purchaseRef, async (purchaseSnap) => {
             let purchaseDoc: any = null;
 
             if (purchaseSnap.exists()) {
@@ -111,6 +114,48 @@
                 };
                 purchase.value = purchaseDoc;
                 authentication.setCodePurchase(purchase.value.code)
+
+                // --------------------------------------------------------------------
+                // 🎯 NOVO CÓDIGO: Buscar Nome dos Membros Ativos
+                // --------------------------------------------------------------------
+                
+                const activityMap = purchaseDoc.members_activity || {};
+                const activeUserIds = Object.keys(activityMap);
+                
+                // Identificar IDs a buscar:
+                // 1. Não é o usuário atual (`authentication.userId`).
+                // 2. Não está nos dados que já buscamos (`membersData.value[userId]`).
+                const idsToFetch = activeUserIds
+                    .filter(userId => userId !== authentication.userId)
+                    .filter(userId => !membersData.value[userId]);
+
+                if (idsToFetch.length > 0) {
+                    // Criar promessas para buscar os documentos na coleção "Users" (global)
+                    const fetchPromises = idsToFetch.map(userId => 
+                        getDoc(doc(firestore, "Users", userId))
+                    );
+
+                    const snaps = await Promise.all(fetchPromises);
+                    
+                    const newMembersData: any = { ...membersData.value };
+
+                    snaps.forEach(snap => {
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            newMembersData[snap.id] = {
+                                // Assumindo que os campos no seu documento User são 'name' e 'image_url'
+                                name: data.name, 
+                                image_url: data.image_url 
+                            };
+                        }
+                    });
+                    
+                    // Atualizar a ref reativa
+                    membersData.value = newMembersData;
+                }
+                
+                // --------------------------------------------------------------------
+
                 if(purchase.value.is_execute) {
                     router.push(`/conta/compras/${purchase.value.id}/executar`)
                 } else {
@@ -119,45 +164,70 @@
             }
         });
     }
+
     const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
 
     const formatActivityTime = (timestamp: any): string => {
         if (!timestamp || typeof timestamp.toDate !== 'function') return 'N/A';
-        
         const date = timestamp.toDate();
-        
         return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
 
     const isUserOnline = (activityTimestamp: any): boolean => {
         if (!activityTimestamp || typeof activityTimestamp.toMillis !== 'function') return false;
-        
         const lastSeenMs = activityTimestamp.toMillis();
         const currentMs = Date.now();
-        
         return (currentMs - lastSeenMs) < ACTIVE_WINDOW_MS;
     };
 
-    // --- COMPUTED PROPERTY (A SOLUÇÃO) ---
-    const activeMembersList = computed(() => {
+    const onlineMembersList = computed(() => {
+        // 1. Inicia o mapa de atividades do purchase
         const activityMap = purchase.value.members_activity || {};
-        const activeMembers: { userId: string, lastSeenTimestamp: any, lastSeenFormatted: string }[] = [];
-
+        const list = [];
+        
+        // 2. Itera sobre a atividade e filtra apenas os ONLINE
         for (const userId in activityMap) {
-            if (Object.prototype.hasOwnProperty.call(activityMap, userId)) {
-                const timestamp = activityMap[userId];
+            if (!Object.prototype.hasOwnProperty.call(activityMap, userId)) continue;
+
+            const lastSeenTimestamp = activityMap[userId];
+            
+            // Mantém sua lógica de filtro por tempo (ACTIVE_WINDOW_MS)
+            if (isUserOnline(lastSeenTimestamp)) { 
                 
-                if (isUserOnline(timestamp)) {
-                    activeMembers.push({
-                        userId: userId,
-                        lastSeenTimestamp: timestamp,
-                        lastSeenFormatted: formatActivityTime(timestamp)
-                    });
-                }
+                let name = 'Buscando...'; // Default, caso o fetch ainda não tenha voltado
+                let image_url = '';
+                
+                // 3. Obtém Nome e Imagem
+                if (userId === authentication.userId) {
+                    // Usuário Logado: Dados da Store
+                    name = authentication.user.name || 'Você';
+                    image_url = authentication.user.image_url || '';
+                    
+                } else if (membersData.value[userId]) {
+                    // Outro Membro no Cache: Dados do Cache
+                    name = membersData.value[userId].name;
+                    image_url = membersData.value[userId].image_url;
+                } 
+                
+                list.push({
+                    userId: userId,
+                    name: name,
+                    image_url: image_url,
+                    lastSeenTimestamp: lastSeenTimestamp,
+                    lastSeenFormatted: formatActivityTime(lastSeenTimestamp),
+                });
             }
         }
+        
+        // 4. Opcional: Ordenar a lista (coloca o usuário logado primeiro)
+        list.sort((a, b) => {
+            if (a.userId === authentication.userId) return -1;
+            if (b.userId === authentication.userId) return 1;
+            // Ordena por último visto, do mais recente para o mais antigo
+            return b.lastSeenTimestamp.toMillis() - a.lastSeenTimestamp.toMillis();
+        });
 
-        return activeMembers;
+        return list;
     });
 
     const getItens = async () => {
@@ -231,7 +301,6 @@
 
             // espera todas as criações terminarem
             await Promise.all(promises);
-
             try {
                 await plannedPurchase(
                     authentication.group.id, 
@@ -259,17 +328,14 @@
     const currentPlanner = computed(() => {
         const lockUserId = purchase.value.planning_lock_userId;
         const lockExpires = purchase.value.planning_lock_expires;
-        
         if (!lockUserId || !lockExpires) {
             return { isLocked: false, userId: null };
         }
-
         // 1. Checa se o lock expirou
         const isExpired = lockExpires.toDate() < new Date();
         
         if (isExpired) {
             // Se expirou, o lock está virtualmente livre
-            // NENHUMA AÇÃO NO FIREBASE DEVE SER FEITA AQUI. A próxima pessoa que der PING vai limpá-lo.
             return { isLocked: false, userId: null };
         }
         
@@ -277,51 +343,60 @@
         return { 
             isLocked: true, 
             userId: lockUserId 
-            // Você pode adicionar a data formatada de expiração aqui se quiser
         };
     });
 
     // Computado para saber se EU posso editar
     const canUserEdit = computed(() => {
         const planner = currentPlanner.value;
-        
-        // Posso editar se: 
-        // 1. O lock está livre (minha próxima chamada ao membersInOnline vai pegar)
-        // 2. Eu sou o dono do lock
         return !planner.isLocked || planner.userId === authentication.userId;
     });
 
-    // NOVO: Função para obter ou renovar o lock e enviar o ping
+    // Adicione este computed property logo após o 'canUserEdit'
+    // Retorna o nome do usuário que detém o lock, ou null se estiver livre
+    const currentPlannerName = computed(() => {
+        const planner = currentPlanner.value;
+        
+        if (!planner.isLocked) {
+            return null; // Ninguém está editando
+        }
+        
+        // Se sou eu que tenho o lock
+        if (planner.userId === authentication.userId) {
+            // Assumindo que o nome do usuário atual está em authentication.user.name
+            return authentication.user.name || 'Você (Dono do Lock)'; 
+        }
+        
+        // Se é outro membro, tentar buscar nos dados que salvamos
+        const member = membersData.value[planner.userId];
+        if (member && member.name) {
+            return member.name;
+        }
+        
+        // Fallback se ainda estiver buscando ou se não encontrou
+        return planner.userId;
+    });
+
     const membersInOnline = async () => {
         const docRef = doc(firestore, "Groups", authentication.group.id, "Purchases", purchase.value.id);
         const currentUserId = authentication.userId;
         
-        // A cada 2 minutos, o lock se renovará por 2 minutos e 10 segundos (para dar uma margem)
-        const newExpiration = new Date(Date.now() + 130000); // 120s (intervalo) + 10s (margem)
+        const newExpiration = new Date(Date.now() + 420000); // 7 minutos
 
-        // 1. Ping de Atividade (sempre faça)
         const pingData = {
             [`members_activity.${currentUserId}`]: serverTimestamp(), 
         };
         
-        // 2. Tentar Adquirir/Renovar o Lock (apenas se for você ou se estiver livre/expirado)
-        // Para simplificar no cliente, faremos 3 updates em sequência:
-        
-        // A) Envia o Ping de Atividade
         await updateDoc(docRef, pingData);
 
-        // B) Tenta adquirir o lock se for o primeiro
         const currentPurchase = purchase.value;
         const lockUserId = currentPurchase.planning_lock_userId;
         const lockExpires = currentPurchase.planning_lock_expires;
-
-        // Verificação de Lock Expirado (ou se sou o atual dono)
         const isLockExpired = lockExpires && lockExpires.toDate() < new Date();
         const isLockFree = !lockUserId;
         const iOwnLock = lockUserId === currentUserId;
 
         if (iOwnLock || isLockFree || isLockExpired) {
-            // Se eu já sou o dono, ou se está livre, ou se expirou, eu tomo/renovo o lock
             await updateDoc(docRef, {
                 planning_lock_userId: currentUserId,
                 planning_lock_expires: newExpiration
@@ -356,7 +431,6 @@
         const docRef = doc(firestore, "Groups", authentication.group.id, "Purchases", purchase.value.id);
 
         if (currentPlanner.value.userId === authentication.userId) {
-            // Limpa o lock explicitamente para liberar para o próximo mais rápido
             updateDoc(docRef, {
                 planning_lock_userId: null,
                 planning_lock_expires: null
@@ -375,8 +449,42 @@
                     <h3 class="text-center text-lg font-[600]">Compra</h3>
                 </div>
                 <p class="mt-2">Faça o planejamento da sua compra até antes do momento da sua compra.</p>
-            </div>
-            {{ purchase }}
+
+                <div v-if="onlineMembersList.length > 0" class="col-span-1 mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-semibold text-gray-600">
+                            Online ({{ onlineMembersList.length }})
+                        </span>
+
+                        <div class="flex -space-x-2">
+                            <div v-for="member in onlineMembersList" :key="member.userId">
+                                <div 
+                                    v-tippy="{ content: member.name + (member.userId === authentication.userId ? ' (Você)' : '') }"
+                                    class="relative"
+                                >
+                                    <img
+                                        :src="member.image_url || '/placeholder-user.png'" 
+                                        :alt="member.name"
+                                        class="w-8 h-8 rounded-full border-2 transition-all duration-200"
+                                        :class="[
+                                            member.userId === authentication.userId 
+                                                ? 'border-green-500 ring-2 ring-green-300 z-10' // Destaca o usuário logado
+                                                : 'border-white hover:border-blue-400' 
+                                        ]"
+                                        loading="lazy"
+                                    />
+
+                                    <span 
+                                        v-if="currentPlanner.isLocked && currentPlanner.userId === member.userId"
+                                        class="absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white bg-yellow-500"
+                                        v-tippy="{ content: 'Controle de Edição' }"
+                                    ></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
             <div class="col-span-1 mt-6">
                 <div class="grid grid-cols-1">
                     <div class="col-span-1">
@@ -388,8 +496,8 @@
                     <div v-if="currentPlanner.isLocked && currentPlanner.userId !== authentication.userId" class="col-span-1 mt-3">
                         <div class="flex flex-col p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
                             <span class="font-[600]">⚠️ Outra pessoa já está planejando.</span>
-                            <span class="text-sm mt-1">O usuário **{{ currentPlanner.userId }}** está com o controle da edição.</span>
-                            <span class="text-xs mt-1">Você poderá editar quando o controle for liberado (expiração automática em 2m10s).</span>
+                            <span class="text-sm mt-1">O usuário **{{ currentPlannerName }}** está com o controle da edição.</span>
+                            <span class="text-xs mt-1">Você poderá editar quando o controle for liberado (expiração automática em 7 minutos).</span>
                         </div>
                     </div>
                     <div class="col-span-1 mt-6 p-4 bg-gray-100 rounded shadow">
