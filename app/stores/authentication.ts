@@ -9,6 +9,7 @@ export interface InterfaceShow {
     profileId: string,
     group: object,
     codePurchase: string,
+    friends: object[]
 }
 
 export const useAuthentication = defineStore('authentication', {
@@ -20,7 +21,8 @@ export const useAuthentication = defineStore('authentication', {
         profile: {},
         profileId: '',
         group: {},
-        codePurchase: ''
+        codePurchase: '',
+        friends: []
     }),
     actions: {
         setToken(dataToken: string) {
@@ -46,6 +48,9 @@ export const useAuthentication = defineStore('authentication', {
         },
         setCodePurchase(dataCodePurchase: string) {
             this.codePurchase = dataCodePurchase
+        },
+        setFriends(dataFriends: object[]) {
+            this.friends = dataFriends
         }
     },
     getters: {
@@ -72,6 +77,9 @@ export const useAuthentication = defineStore('authentication', {
         },
         getCodePurchase(): string {
             return this.codePurchase
+        },
+        getFriends(): object[] {
+            return this.friends
         }
     }
 })

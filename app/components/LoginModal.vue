@@ -78,7 +78,7 @@
               last_login: dateTimestamp,
               updated_at: dateTimestamp,
           });
-          router.push('/grupos')
+          router.push('/conta/grupos')
           setTimeout(() => {
               alert(`O login foi feito com sucesso. Seja bem vindo!`)
           }, 1000)

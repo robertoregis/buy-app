@@ -55,3 +55,16 @@ export const convertDateFirestore = (date: any) => {
     }
     return result
 }
+
+export const convertDateFirestoreFriends = (date: any) => {
+    const newTimestamp = new Timestamp(date.seconds, date.nanoseconds)
+    const newDate = newTimestamp.toDate()
+    let result
+    if(newDate.getDate()) {
+        let myDate = convertDate(newDate)
+        result = `amigos desde ${myDate.day}/${myDate.month}/${myDate.year}`
+    } else {
+        result = '-'
+    }
+    return result
+}

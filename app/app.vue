@@ -8,7 +8,7 @@
   import { useUserData } from './composables/useUserData';
   import {
     signOut
-  } from 'firebase/auth'
+  } from 'firebase/auth';
 
   export default {
     setup() {

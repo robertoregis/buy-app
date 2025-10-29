@@ -75,7 +75,7 @@ export default defineComponent({
           code,
         };
 
-        const result = await createPurchase(authentication.group.id, {
+        const result = await createPurchase(authentication.group.id, authentication.userId, {
           ...baseData,
         })
 

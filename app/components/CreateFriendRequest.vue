@@ -1,9 +1,10 @@
 <script lang="ts">
 import { ref, defineComponent, watch } from 'vue';
-import { vMaska } from "maska/vue";
+import { createFriendRequest } from '../composables/firebaseDocs';
+import { useAuthentication } from '../stores/authentication';
 
 export default defineComponent({
-  name: 'NewModal',
+  name: 'CreateFriendRequest',
   props: {
     modelValue: {
       type: Boolean,
@@ -14,19 +15,20 @@ export default defineComponent({
       required: false,
       default: true,
     },
-    newId: {
-      type: String,
+    users: {
+      type: Object,
       required: true
     }
   },
-  directives: {
-		maska: vMaska, // 👈 registra a diretiva
-	},
-  emits: ['update:modelValue', 'closed'],
+  emits: ['update:modelValue', 'closed', 'created'],
   setup(props, { emit }) {
     const isOpen = ref(props.modelValue);
+    const users = ref(props.users);
     const router = useRouter();
-    const newId = ref(props.newId);
+    const authentication: any = useAuthentication()
+    const versions = ref<any[]>([
+      'Mensal', 'Quinzenal', 'Semanal', 'Avulsa'
+    ])
     const closeModal = () => {
       isOpen.value = false;
       emit('update:modelValue', false);
@@ -37,6 +39,27 @@ export default defineComponent({
     watch(() => props.modelValue, (newVal) => {
       isOpen.value = newVal;
     });
+    watch(() => props.users, (newVal) => {
+      users.value = newVal;
+    });
+
+    const create = async () => {
+      try {
+        await createFriendRequest(users.value.me, users.value.they).
+          then((response: any) => {
+            if(response.status === 200) {
+              alert(response.message)
+              router.push(`/conta/amigos/pedidos`)
+            } else if(response.status === 300) {
+              alert(response.message)
+            }
+            closeModal();
+          })
+        // você pode escolher para onde redirecionar (ex: para a planejada)
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
 
     // Fechar se o usuário clicar fora do modal (em um fundo opaco)
@@ -50,6 +73,10 @@ export default defineComponent({
       isOpen,
       closeModal,
       handleBackdropClick,
+      users,
+      versions,
+      create,
+      authentication
     };
   },
 });
@@ -58,14 +85,14 @@ export default defineComponent({
 <template>
   <div
     v-if="isOpen"
-    class="fixed px-2 inset-0 bg-black/50 bg-opacity-50 z-50 flex justify-center items-center"
+    class="fixed px-2 inset-0 bg-black/50 bg-opacity-50 z-100 flex justify-center items-center"
     @click="handleBackdropClick"
   >
     <div
-      class="w-[800px] bg-white rounded-lg shadow-lg p-[30px] relative max-h-[90vh] overflow-hidden flex flex-col"
+      class="w-[600px] bg-white rounded-lg shadow-lg p-[30px] relative max-h-[90vh] overflow-hidden flex flex-col"
     >
       <!-- Cabeçalho do modal -->
-      <div class="text-xl font-semibold mb-2">título da novidade</div>
+      <div class="text-xl font-semibold mb-2">Criar pedido de amizade</div>
 
       <!-- Conteúdo rolável do modal -->
       <div class="overflow-y-auto flex-1">
@@ -73,35 +100,12 @@ export default defineComponent({
           <div class="col-span-1">
             <div class="grid grid-cols-1">
               <div class="col-span-1">
-                <div class="flex flex-col">
-                  <div class="flex items-center">
-                    <span class="text-[0.9rem]">Data de criação:</span>
-                    <span class="text-sm ml-2">12/05/2025</span>
-                  </div>
-                  <div class="flex items-center">
-                    <span class="text-[0.9rem]">Data de entrega:</span>
-                    <span class="text-sm ml-2">12/05/2025</span>
-                  </div>
-                  <div class="flex mt-2">
-                    <span class="bg-red-600 text-white text-[0.8rem]" style="padding: 1px 10px;">Importância</span>
-                  </div>
-                </div>
+                <p>Você está perto de criar um pedido de amizade para <span class="font-[600]">{{ users.they.name }}.</span></p>
               </div>
-
               <div class="col-span-1 mt-4">
-                <div class="flex flex-col">
-                  <div class="flex flex-col">
-                    <h2 class="font-[600]">Descrição</h2>
-                    <p>kdkddkdkd</p>
-                  </div>
-                  <div class="flex flex-col mt-2">
-                    <h2 class="font-[600]">Impacto para o cliente</h2>
-                    <p>kdkddkdkd</p>
-                  </div>
-                  <div class="flex flex-col mt-2">
-                    <h2 class="font-[600]">Observações</h2>
-                    <p>kdkddkdkd</p>
-                  </div>
+                <div class="flex items-center justify-end">
+                  <Button @click="closeModal" label="Cancelar" color="bg-red-700" class="mr-2" />
+                  <Button @click="create" label="Criar" color="bg-green-700" />
                 </div>
               </div>
             </div>

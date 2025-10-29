@@ -1,5 +1,5 @@
 // composables/useProfile.ts
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { useFirebase } from '@/composables/useFirebase'
 import { useAuthentication } from '@/stores/authentication'
 /*import { useToast } from 'vue-toastification'*/
@@ -36,6 +36,20 @@ export const useProfile = () => {
         authentication.setGroup(groupData)
       }
     }
+    let friends = []
+    // Query para buscar os dados
+    const q = query(
+    collection(firestore, "Friendships"),
+        where("is_active", "==", true),
+        where('friends', 'array-contains', authentication.userId),
+        orderBy("created_at", "desc"),
+    )
+    const querySnapshot = await getDocs(q)
+    friends = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    authentication.setFriends(friends)
 
     return {
       profile: profileData,

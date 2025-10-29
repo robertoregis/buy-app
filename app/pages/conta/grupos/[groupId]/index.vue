@@ -12,6 +12,7 @@
     const { firestore } = useFirebase();
     const authentication: any = useAuthentication();
     const isCreateNewModal = ref<boolean>(false);
+    const isAddParticipant = ref<boolean>(false);
     const router = useRouter();
     const route: any = useRoute();
     const purchases = ref<any[]>([])
@@ -20,6 +21,9 @@
     const group = ref<any>({})
     const loading = ref<boolean>(true)
     const totalResult = ref<any>(0)
+
+    const participantSelected = ref<any>({});
+    const isShowParticipant = ref<boolean>(false);
 
     const getGroup = async () => {
         const groupRef = doc(firestore, "Groups", route.params.groupId);
@@ -150,6 +154,12 @@
         return `R$ ${price.toFixed(2).replace(".", ",")}`
     }
 
+    const showParticipant = (participant: any) => {
+        participantSelected.value = {}
+        participantSelected.value = participant
+        isShowParticipant.value = true
+    }
+
     onBeforeMount(() => {
         params.changeRouteCurrent('group')
     })
@@ -225,20 +235,20 @@
                             <div v-if="participants.length > 0" class="col-span-1 mt-2">
                                 <div class="grid grid-cols-1 gap-2">
                                     <template v-for="participant in participants" :key="participant.id">
-                                        <NuxtLink :to="`/conta/compras/${participant.id}`" class="cursor-pointer col-span-1 p-2 shadow bg-gray-200 rounded">
+                                        <div @click="showParticipant(participant)" role="dialog" tabindex="0" class="cursor-pointer col-span-1 p-2 shadow bg-gray-200 rounded">
                                             <div class="flex items-center mt-1">
-                                                <div class="w-[42px] h-[42px] rounded-full shadow-lg border-1 p-1 border-black/10 overflow-hidden">
-                                                    <img :src="participant.image_url" alt="">
+                                                <div class="rounded-full shadow-lg border-1 p-1 border-black/10">
+                                                    <img :src="participant.image_url" class="w-[42px] h-[42px] rounded-full" alt="">
                                                 </div>
                                                 <span class="ml-3">{{ participant.name }}</span>
                                             </div>
-                                        </NuxtLink>
+                                        </div>
                                     </template>
                                 </div>
                             </div>
-                            <div class="col-span-1" :class="`${participants.length > 0 ? 'mt-4' : 'mt-2'}`">
+                            <div v-if="group.owner_id === authentication.userId" class="col-span-1" :class="`${participants.length > 0 ? 'mt-4' : 'mt-2'}`">
                                 <div class="flex items-center">
-                                    <Button label="Adicionar participante" color="bg-green-700 text-white" />
+                                    <Button @click="isAddParticipant = true" label="Adicionar participante" color="bg-green-700 text-white" />
                                 </div>
                             </div>
                         </div>
@@ -249,4 +259,6 @@
         </div>
     </main>
     <CreateNewModal v-model="isCreateNewModal" />
+    <AddParticipant v-model="isAddParticipant" :participants="participants" type="group" @added="getGroup" />
+    <Participant v-model="isShowParticipant" :participant="participantSelected" />
 </template>

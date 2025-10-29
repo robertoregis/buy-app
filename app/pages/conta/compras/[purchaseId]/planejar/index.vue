@@ -1,11 +1,15 @@
 <script setup lang="ts">
     import { useParams } from '../../../../../stores/params.js';
     import { useAuthentication } from '../../../../../stores/authentication.js';
-    import { doc, onSnapshot, getDoc, query, where, orderBy, getDocs, getCountFromServer, collection } from "firebase/firestore";
+    import { doc, onSnapshot, getDoc, query,
+        orderBy, getDocs, getCountFromServer,
+        collection, updateDoc, serverTimestamp
+    } from "firebase/firestore";
     import { useFirebase } from "../../../../../composables/useFirebase";
-    import { saveItem, deleteItem, plannedPurchase } from '../../../../../composables/firebaseDocs.js';
+    import { saveItem, deleteItem, plannedPurchase, updatePurchaseMemberInOnline } from '../../../../../composables/firebaseDocs.js';
 
     const params = useParams();
+    type MemberActivity = { id: string, activity: any };
 
     definePageMeta({
         layout: 'dashboard'
@@ -20,6 +24,7 @@
     const totalResult = ref<number>(0)
     const purchaseItens = ref<any[]>([])
     const itensDeleted = ref<any[]>([])
+    const myInterval = ref<any>(null)
 
     // O formdata agora é um array de objetos
     const formdata = ref<any[]>([
@@ -94,24 +99,17 @@
         });
 
     const getPurchase = async () => {
-        try {
-            const purchaseRef = doc(
-                firestore,
-                "Groups",
-                authentication.group.id,
-                "Purchases",
-                route.params.purchaseId
-            )
+        const purchaseRef = doc(firestore, "Groups", authentication.group.id, "Purchases", route.params.purchaseId);
 
-            const purchaseSnap = await getDoc(purchaseRef)
+        const unsubscribe = onSnapshot(purchaseRef, (purchaseSnap) => {
+            let purchaseDoc: any = null;
 
             if (purchaseSnap.exists()) {
-                const purchaseDoc = {
+                purchaseDoc = {
                     id: purchaseSnap.id,
-                    ...purchaseSnap.data(),
-                }
-
-                purchase.value = purchaseDoc
+                    ...purchaseSnap.data()
+                };
+                purchase.value = purchaseDoc;
                 authentication.setCodePurchase(purchase.value.code)
                 if(purchase.value.is_execute) {
                     router.push(`/conta/compras/${purchase.value.id}/executar`)
@@ -119,10 +117,48 @@
                     getItens()
                 }
             }
-        } catch (error) {
-            console.error("Erro ao buscar purchase:", error)
-        }
+        });
     }
+    const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+
+    const formatActivityTime = (timestamp: any): string => {
+        if (!timestamp || typeof timestamp.toDate !== 'function') return 'N/A';
+        
+        const date = timestamp.toDate();
+        
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+
+    const isUserOnline = (activityTimestamp: any): boolean => {
+        if (!activityTimestamp || typeof activityTimestamp.toMillis !== 'function') return false;
+        
+        const lastSeenMs = activityTimestamp.toMillis();
+        const currentMs = Date.now();
+        
+        return (currentMs - lastSeenMs) < ACTIVE_WINDOW_MS;
+    };
+
+    // --- COMPUTED PROPERTY (A SOLUÇÃO) ---
+    const activeMembersList = computed(() => {
+        const activityMap = purchase.value.members_activity || {};
+        const activeMembers: { userId: string, lastSeenTimestamp: any, lastSeenFormatted: string }[] = [];
+
+        for (const userId in activityMap) {
+            if (Object.prototype.hasOwnProperty.call(activityMap, userId)) {
+                const timestamp = activityMap[userId];
+                
+                if (isUserOnline(timestamp)) {
+                    activeMembers.push({
+                        userId: userId,
+                        lastSeenTimestamp: timestamp,
+                        lastSeenFormatted: formatActivityTime(timestamp)
+                    });
+                }
+            }
+        }
+
+        return activeMembers;
+    });
 
     const getItens = async () => {
         try {
@@ -182,15 +218,15 @@
             }
             // cria um array de promessas (uma para cada item)
             const promises = formdata.value.map(async (item) => {
-            const formattedItem = {
-                id: item.id ?? null,
-                name: item.name?.trim(),
-                amount: Number(item.amount) || 0,
-                price: parseFloat(String(item.price).replace(",", ".")) || 0,
-                created_by: authentication.user.id,
-            };
+                const formattedItem = {
+                    id: item.id ?? null,
+                    name: item.name?.trim(),
+                    amount: Number(item.amount) || 0,
+                    price: parseFloat(String(item.price).replace(",", ".")) || 0,
+                    created_by: authentication.user.id,
+                };
 
-            await saveItem(authentication.group.id, purchase.value.id, purchase.value.purchase_planned_id, formattedItem);
+                await saveItem(authentication.group.id, purchase.value.id, purchase.value.purchase_planned_id, formattedItem);
             });
 
             // espera todas as criações terminarem
@@ -203,6 +239,7 @@
                     purchase.value.purchase_planned_id,
                     Number(totalAmount.value) || 0,
                     parseFloat(String(totalPrice.value).replace(",", ".")) || 0,
+                    purchase.value.purchase_geral_id
                 ).
                     then(() => {
                         router.push(`/conta/compras/${purchase.value.id}/exibir`)
@@ -218,6 +255,82 @@
         }
     };
 
+    // Computado para determinar o usuário que tem o lock ATUALMENTE
+    const currentPlanner = computed(() => {
+        const lockUserId = purchase.value.planning_lock_userId;
+        const lockExpires = purchase.value.planning_lock_expires;
+        
+        if (!lockUserId || !lockExpires) {
+            return { isLocked: false, userId: null };
+        }
+
+        // 1. Checa se o lock expirou
+        const isExpired = lockExpires.toDate() < new Date();
+        
+        if (isExpired) {
+            // Se expirou, o lock está virtualmente livre
+            // NENHUMA AÇÃO NO FIREBASE DEVE SER FEITA AQUI. A próxima pessoa que der PING vai limpá-lo.
+            return { isLocked: false, userId: null };
+        }
+        
+        // 2. Se não expirou, há um dono
+        return { 
+            isLocked: true, 
+            userId: lockUserId 
+            // Você pode adicionar a data formatada de expiração aqui se quiser
+        };
+    });
+
+    // Computado para saber se EU posso editar
+    const canUserEdit = computed(() => {
+        const planner = currentPlanner.value;
+        
+        // Posso editar se: 
+        // 1. O lock está livre (minha próxima chamada ao membersInOnline vai pegar)
+        // 2. Eu sou o dono do lock
+        return !planner.isLocked || planner.userId === authentication.userId;
+    });
+
+    // NOVO: Função para obter ou renovar o lock e enviar o ping
+    const membersInOnline = async () => {
+        const docRef = doc(firestore, "Groups", authentication.group.id, "Purchases", purchase.value.id);
+        const currentUserId = authentication.userId;
+        
+        // A cada 2 minutos, o lock se renovará por 2 minutos e 10 segundos (para dar uma margem)
+        const newExpiration = new Date(Date.now() + 130000); // 120s (intervalo) + 10s (margem)
+
+        // 1. Ping de Atividade (sempre faça)
+        const pingData = {
+            [`members_activity.${currentUserId}`]: serverTimestamp(), 
+        };
+        
+        // 2. Tentar Adquirir/Renovar o Lock (apenas se for você ou se estiver livre/expirado)
+        // Para simplificar no cliente, faremos 3 updates em sequência:
+        
+        // A) Envia o Ping de Atividade
+        await updateDoc(docRef, pingData);
+
+        // B) Tenta adquirir o lock se for o primeiro
+        const currentPurchase = purchase.value;
+        const lockUserId = currentPurchase.planning_lock_userId;
+        const lockExpires = currentPurchase.planning_lock_expires;
+
+        // Verificação de Lock Expirado (ou se sou o atual dono)
+        const isLockExpired = lockExpires && lockExpires.toDate() < new Date();
+        const isLockFree = !lockUserId;
+        const iOwnLock = lockUserId === currentUserId;
+
+        if (iOwnLock || isLockFree || isLockExpired) {
+            // Se eu já sou o dono, ou se está livre, ou se expirou, eu tomo/renovo o lock
+            await updateDoc(docRef, {
+                planning_lock_userId: currentUserId,
+                planning_lock_expires: newExpiration
+            });
+            console.log(`Lock renovado por: ${currentUserId}`);
+        } else {
+            console.log(`Lock negado. Dono atual: ${lockUserId}`);
+        }
+    }
 
     onBeforeMount(() => {
         params.changeRouteCurrent('purchase')
@@ -228,6 +341,26 @@
             router.push('/conta/grupos')
         } else {
             getPurchase()
+            setTimeout(() => {
+                membersInOnline()
+            }, 2000)
+            myInterval.value = setInterval(() => {
+                membersInOnline()
+            }, 120000)
+        }
+    })
+
+    onBeforeUnmount(() => {
+        clearInterval(myInterval.value)
+
+        const docRef = doc(firestore, "Groups", authentication.group.id, "Purchases", purchase.value.id);
+
+        if (currentPlanner.value.userId === authentication.userId) {
+            // Limpa o lock explicitamente para liberar para o próximo mais rápido
+            updateDoc(docRef, {
+                planning_lock_userId: null,
+                planning_lock_expires: null
+            }).catch(e => console.error("Falha ao liberar o lock: ", e));
         }
     })
 </script>
@@ -243,27 +376,34 @@
                 </div>
                 <p class="mt-2">Faça o planejamento da sua compra até antes do momento da sua compra.</p>
             </div>
-
+            {{ purchase }}
             <div class="col-span-1 mt-6">
                 <div class="grid grid-cols-1">
                     <div class="col-span-1">
                         <div class="flex justify-center items-center">
                             <NuxtLink v-if="purchase.is_execute" :to="`/conta/compras/${route.params.purchaseId}/exibir`" class="bg-green-700 text-white px-5 py-1 rounded mr-3">Exibir</NuxtLink>
-                            <NuxtLink v-if="!purchase.is_execute" :to="`/conta/compras/${route.params.purchaseId}/executar`" class="bg-green-700 text-white px-5 py-1 rounded">Executar</NuxtLink>
+                            <NuxtLink v-if="!purchase.is_execute && canUserEdit" :to="`/conta/compras/${route.params.purchaseId}/executar`" class="bg-green-700 text-white px-5 py-1 rounded">Executar</NuxtLink>
+                        </div>
+                    </div>
+                    <div v-if="currentPlanner.isLocked && currentPlanner.userId !== authentication.userId" class="col-span-1 mt-3">
+                        <div class="flex flex-col p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
+                            <span class="font-[600]">⚠️ Outra pessoa já está planejando.</span>
+                            <span class="text-sm mt-1">O usuário **{{ currentPlanner.userId }}** está com o controle da edição.</span>
+                            <span class="text-xs mt-1">Você poderá editar quando o controle for liberado (expiração automática em 2m10s).</span>
                         </div>
                     </div>
                     <div class="col-span-1 mt-6 p-4 bg-gray-100 rounded shadow">
-                            <h3 class="text-xl font-bold">Totais</h3>
-                            <div class="mt-2 flex justify-between">
-                                <p class="text-lg font-medium">Quantidade Total:</p>
-                                <p class="text-lg font-bold">{{ totalAmount }}</p>
-                            </div>
-                            <div class="flex justify-between">
-                                <p class="text-lg font-medium">Valor Total:</p>
-                                <p class="text-lg font-bold">R$ {{ totalPrice.toFixed(2) }}</p>
-                            </div>
+                        <h3 class="text-xl font-bold">Totais</h3>
+                        <div class="mt-2 flex justify-between">
+                            <p class="text-lg font-medium">Quantidade Total:</p>
+                            <p class="text-lg font-bold">{{ totalAmount }}</p>
                         </div>
-                    <div class="col-span-1">
+                        <div class="flex justify-between">
+                            <p class="text-lg font-medium">Valor Total:</p>
+                            <p class="text-lg font-bold">R$ {{ totalPrice.toFixed(2) }}</p>
+                        </div>
+                    </div>
+                    <div v-if="canUserEdit" class="col-span-1 mt-1">
                         <form action="" class="grid grid-cols-1 gap-4">
                             <div v-for="(item, index) in formdata" :key="index" class="p-2 bg-white shadow rounded relative">
                                 <div class="grid grid-cols-1 md:grid-cols-10 gap-2 md:gap-4 items-center">
@@ -307,7 +447,7 @@
                                 </div>
                             </div>
                             
-                            <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="col-span-1 mt-4">
+                            <div v-if="!purchase.is_execute && !purchase.is_in_progress && canUserEdit" class="col-span-1 mt-4">
                                 <div class="flex items-center justify-between">
                                     <Button @click.prevent="addNewItem" label="Adicionar novo item" color="bg-blue-500" />
                                     <Button @click="send" label="Salvar" color="bg-green-700" />
