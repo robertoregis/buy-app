@@ -19,9 +19,13 @@
     const purchase = ref<any>({})
     const loading = ref<boolean>(true)
     const totalResult = ref<number>(0)
-    // purchaseItens não é mais necessário, o formdata é a fonte da verdade
+    
     const itensDeleted = ref<any[]>([])
-    let unsubscribe: Function | null = null // Para o listener do onSnapshot
+    
+    // Listener 1: Para a coleção de Itens
+    let unsubscribe: Function | null = null 
+    // Listener 2 (Novo): Para o documento de Compra
+    let unsubscribePurchase: Function | null = null 
 
     // O formdata agora é um array de objetos (contém todos os itens de todos os usuários)
     const formdata = ref<any[]>([
@@ -92,30 +96,36 @@
         normalized = normalized.replace(",", ".");
         const n = parseFloat(normalized);
         return Number.isFinite(n) ? n : 0;
-        };
+    };
 
-        const totalAmount = computed(() => {
+    const totalAmount = computed(() => {
         return formdata.value.reduce((total, item) => {
             const q = parseNumber(item.amount);
             return total + q;
         }, 0);
-        });
+    });
 
-        const totalPrice = computed(() => {
+    const totalPrice = computed(() => {
         return formdata.value.reduce((total, item) => {
             const price = parseNumber(item.price);
             const amount = parseNumber(item.amount);
             return total + price * amount;
         }, 0);
-        });
+    });
 
-        // opcional: formato pronto para exibir
-        const totalPriceFormatted = computed(() => {
+    // opcional: formato pronto para exibir
+    const totalPriceFormatted = computed(() => {
         return `R$ ${totalPrice.value.toFixed(2).replace(".", ",")}`;
-        });
+    });
 
-    const getPurchase = async () => {
+    // Função AGORA usa onSnapshot para garantir real-time no status da compra
+    const getPurchase = () => {
         try {
+            // Limpa o listener anterior, se houver
+            if (unsubscribePurchase) {
+                unsubscribePurchase(); 
+            }
+
             const purchaseRef = doc(
                 firestore,
                 "Groups",
@@ -124,32 +134,50 @@
                 route.params.purchaseId
             )
 
-            const purchaseSnap = await getDoc(purchaseRef)
+            // Configura o listener em tempo real para o documento de compra
+            unsubscribePurchase = onSnapshot(purchaseRef, (purchaseSnap) => {
+                if (purchaseSnap.exists()) {
+                    const purchaseDoc = {
+                        id: purchaseSnap.id,
+                        ...purchaseSnap.data(),
+                    }
 
-            if (purchaseSnap.exists()) {
-                const purchaseDoc = {
-                    id: purchaseSnap.id,
-                    ...purchaseSnap.data(),
-                }
+                    purchase.value = purchaseDoc
+                    authentication.setCodePurchase(purchase.value.code)
+                    
+                    // Se a compra AGORA está em execução, inicia o listener de itens.
+                    // Chamamos getItens() aqui para garantir que ele comece a ouvir no momento certo.
+                    if (purchase.value.is_execute) {
+                        getItens()
+                    } else {
+                        // Se não estiver em execução, e o listener de itens estiver ativo, 
+                        // o getItens() precisa ser parado, mas a lógica de getItens() 
+                        // e onBeforeUnmount já cuidam disso.
+                        loading.value = false;
+                    }
 
-                purchase.value = purchaseDoc
-                authentication.setCodePurchase(purchase.value.code)
-                // Se a compra já está em execução, inicia o listener em tempo real
-                if (purchase.value.is_execute) {
-                    getItens()
+                    if(purchase.value.is_closed) {
+                        router.push(`/conta/compras/${purchase.value.id}/exibir`)
+                    }
                 } else {
+                    console.error("Documento de compra não encontrado.");
                     loading.value = false;
                 }
-            }
+            }, (error) => {
+                console.error("Erro ao ouvir purchase em tempo real:", error);
+                loading.value = false;
+            });
+            
         } catch (error) {
-            console.error("Erro ao buscar purchase:", error)
+            console.error("Erro ao configurar listener de purchase:", error)
+            loading.value = false;
         }
     }
 
-    // Usando onSnapshot para real-time
+    // Usando onSnapshot para real-time nos itens
     const getItens = () => {
         if (unsubscribe) {
-            unsubscribe(); // Limpa o listener antigo
+            unsubscribe(); // Limpa o listener antigo de Itens
         }
         
         const q = query(
@@ -164,38 +192,43 @@
                 ...doc.data()
             }));
 
-            // CRUCIAL: Mantém os itens dos outros usuários, mas permite a edição dos seus.
-            // Para evitar que a tela 'pule' e que os itens vazios sumam, fazemos um merge:
-            
-            // 1. Pega os itens que SÃO MEUS (ou novos, sem ID) que estão no meu formulário
-            const myCurrentEdits = formdata.value.filter(item => isMyItem(item));
+            // Os itens do Firestore (a fonte da verdade para itens salvos)
+            const itemsFromDb = items.filter(item => item.id); 
 
-            // 2. Pega os itens ATUAIS do banco de dados (de todos, incluindo os meus recém-salvos)
-            const itemsFromDb = items.filter(item => item.id); // Itens salvos
+            // PASSO 1 REESCRITO: Pega **APENAS** os itens novos/não-salvos do formulário
+            // Estes são os itens que o usuário está digitando AGORA e que ainda não têm um ID.
+            // O `isMyItem` garante que você não pegue itens vazios criados para outros usuários
+            const myUnsavedEdits = formdata.value.filter(item => !item.id && isMyItem(item));
 
-            // 3. Remove meus itens salvos do passo 2 para evitar duplicação
-            const othersItems = itemsFromDb.filter((item: any) => item.created_by !== authentication.user.id);
+            // 2. Todos os itens salvos de TODOS os usuários, conforme o Firestore
+            // (Aqui, itens do seu usuário que foram salvos JÁ estão incluídos na lista itemsFromDb)
+            // itemsFromDb já é a lista completa dos itens SALVOS
+            const allSavedItems = itemsFromDb; 
 
-            // 4. Junta os itens dos outros com os meus itens que estão em edição
-            const mergedFormdata = [...myCurrentEdits, ...othersItems];
+            // 3. Remova itens dos outros usuários (esta linha é CONFUSA e deve ser removida)
+            // Você não precisa de othersItems se o passo 4 for feito corretamente.
+
+            // 4. Junta a Fonte da Verdade (todos os salvos) com as Edições Não-Salvas (só as minhas)
+            const mergedFormdata = [...allSavedItems, ...myUnsavedEdits];
             
             // Filtra itens incompletos (apenas se a lista não estiver vazia)
             const cleanFormdata = mergedFormdata.filter(item => item.name || item.amount || item.price || item.id);
 
             // Garante que o formulário tenha pelo menos um item vazio se a lista de itens salvos estiver vazia
-            if (cleanFormdata.length === 0) {
-                 formdata.value = [{ name: null, amount: null, price: null, created_by: authentication.user.id }];
+            if (cleanFormdata.length === 0 || !cleanFormdata.some(item => !item.id && isMyItem(item))) {
+                 // Adiciona um item vazio se não houver itens e/ou se não houver um item novo para digitação
+                 formdata.value = [...cleanFormdata, { name: null, amount: null, price: null, created_by: authentication.user.id }];
             } else {
-                 // Reordena para mostrar os meus itens primeiro na lista de edição
-                 cleanFormdata.sort((a, b) => {
+                // Reordena para mostrar os meus itens primeiro na lista de edição
+                cleanFormdata.sort((a, b) => {
                     const aIsMine = isMyItem(a);
                     const bIsMine = isMyItem(b);
                     if (aIsMine && !bIsMine) return -1;
                     if (!aIsMine && bIsMine) return 1;
                     // Mantenha a ordenação original (por created_at) para os demais
                     return 0;
-                 });
-                 formdata.value = cleanFormdata;
+                });
+                formdata.value = cleanFormdata;
             }
 
 
@@ -210,8 +243,7 @@
     const deleteItems = async () => {
         // Criamos uma nova função para deletar APENAS OS MEUS itens deletados.
         const myItemsToDelete = itensDeleted.value.filter(itemId => 
-            // Para ter certeza, você pode adicionar uma verificação de 'created_by' aqui
-            // mas confiamos na UI ter impedido a adição de IDs que não são seus ao array
+            // Confiamos na UI ter impedido a adição de IDs que não são seus ao array
             itemId 
         );
 
@@ -234,8 +266,6 @@
     }
 
     const execute = async () => {
-        // Aqui você precisa decidir: quem inicia a execução é o "created_by" dos itens copiados?
-        // Sim, adicionamos essa lógica no firebaseDocs.ts.
         try {
             await initExecutePurchase(
                 authentication.group.id, 
@@ -246,15 +276,37 @@
                 authentication.user.id // Passa o ID do usuário que está iniciando
             ).
                 then(() => {
-                    getPurchase()
+                    // Após iniciar, o listener de purchase (getPurchase) já vai atualizar
+                    // e chamar o getItens() se necessário.
                 })
         } catch(error) {
             console.log(error)
         }
     }
 
-    // Nova lógica de salvamento colaborativo
-    const send = async () => {
+    const finishPurchase = async() => {
+        try {
+            await savedItens(); // Salva antes de finalizar, para garantir
+
+            await finishedPurchase(
+                authentication.group.id, 
+                purchase.value.id,
+                purchase.value.purchase_final_id,
+                purchase.value.purchase_planned_id,
+                Number(totalAmount.value) || 0,
+                parseFloat(String(totalPrice.value).replace(",", ".")) || 0,
+                purchase.value.purchase_geral_id
+            ).
+                then(() => {
+                    alert("Compra finalizada com sucesso!");
+                    router.push(`/conta/compras/${purchase.value.id}/exibir`)
+                })
+        } catch(error) {
+            console.log(error)
+        }
+    }
+
+    const savedItens = async() => {
         // Filtra para garantir que só estou tentando salvar itens que me pertencem
         const myItemsToSave = formdata.value.filter(item => isMyItem(item));
 
@@ -262,7 +314,7 @@
         const validItemsToSave = myItemsToSave.filter(item => item.name?.trim());
 
         if (!validItemsToSave.length) {
-            // alert("Adicione pelo menos um item com nome válido.");
+            alert("Adicione pelo menos um item com nome válido.");
             return;
         }
 
@@ -288,48 +340,25 @@
 
             await Promise.all(promises);
             
-            // Passo 3: Finalização (Só a pessoa que clicar em FINALIZAR faz isso)
-            // Se você quiser que o botão 'Salvar' também finalize a compra, mantenha o código abaixo.
-            // No entanto, é mais comum ter um botão SEPARADO de 'Finalizar Compra'
-            // para que o 'Salvar' seja apenas o salvamento colaborativo.
-            
-            // *MANTENHO A LÓGICA DE FINALIZAÇÃO DENTRO DO SEND, mas sugiro separá-la no futuro*
-
-            try {
-                // ATENÇÃO: Esta parte finaliza a compra. Se você quer que o botão "Salvar" 
-                // apenas salve colaborativamente, remova a chamada ao finishedPurchase.
-                await finishedPurchase(
-                    authentication.group.id, 
-                    purchase.value.id,
-                    purchase.value.purchase_final_id,
-                    purchase.value.purchase_planned_id,
-                    Number(totalAmount.value) || 0,
-                    parseFloat(String(totalPrice.value).replace(",", ".")) || 0,
-                    purchase.value.purchase_geral_id
-                ).
-                    then(() => {
-                        router.push(`/conta/compras/${purchase.value.id}/exibir`)
-                    })
-            } catch(error) {
-                console.log(error)
-            }
-
-            // alert("Compra finalizada com sucesso!"); // Substituir por feedback
+            alert("Itens salvos com sucesso!"); // Substituir por feedback
         } catch (error) {
             console.error("Erro ao finalizar/salvar a compra:", error);
             // alert("Erro ao finalizar/salvar a compra.");
         }
-    };
+    }
 
 
     onBeforeMount(() => {
         params.changeRouteCurrent('purchase')
     })
     
-    // Antes de desmontar, remove o listener em tempo real
+    // Antes de desmontar, remove TODOS os listeners em tempo real
     onBeforeUnmount(() => {
-        if (unsubscribe) {
+        if (unsubscribe) { // Listener de Itens
             unsubscribe();
+        }
+        if (unsubscribePurchase) { // Listener de Compra
+            unsubscribePurchase();
         }
     })
 
@@ -337,108 +366,200 @@
         if(!Object.keys(authentication.group || {}).length) {
             router.push('/conta/grupos')
         } else {
-            getPurchase()
+            getPurchase() // Agora configura o listener do documento de compra
         }
     })
 </script>
 
 <template>
-    <main class="container mx-auto p-4 md:p-0">
-        <div class="grid grid-cols">
-
-            <div class="col-span-1 mt-4">
-                <div class="flex flex-col w-full">
-                    <h2 class="text-center text-2xl font-semibold text-gray-800">Executar</h2>
-                    <h3 class="text-center text-xl font-light text-green-600">Compra</h3>
+    <main class="container mx-auto px-4 max-w-4xl">
+        <div class="space-y-6">
+            <!-- Header Section -->
+            <div class="text-center space-y-3">
+                <div class="space-y-1">
+                    <h2 class="text-3xl font-bold text-gray-800">Executar Compra</h2>
+                    <h3 class="text-xl font-semibold text-orange-600">Registro Real</h3>
                 </div>
-                <p class="mt-2 text-center text-gray-600">É hora de registrar os itens realmente comprados.</p>
+                <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                    É hora de registrar os itens realmente comprados.
+                </p>
             </div>
 
-            <div class="col-span-1 mt-6">
-                <div class="grid grid-cols-1">
-                    <!-- Botões e Status -->
-                    <div class="col-span-1 mb-4">
-                        <div class="flex justify-center items-center space-x-3">
-                            <NuxtLink :to="`/conta/compras/${route.params.purchaseId}/exibir`" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow-md transition duration-300">Exibir</NuxtLink>
-                            <Button v-if="!purchase.is_execute" @click="execute()" label="Iniciar Execução" color="bg-purple-600" class="hover:bg-purple-700" />
-                        </div>
-                    </div>
+            <!-- Action Buttons -->
+            <div class="flex justify-center space-x-4">
+                <NuxtLink 
+                    :to="`/conta/compras/${route.params.purchaseId}/exibir`" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
+                >
+                    Exibir Compra
+                </NuxtLink>
+                <Button
+                    v-if="!purchase.is_execute"
+                    @click="execute()"
+                    label="Iniciar Execução"
+                    color="bg-purple-600 hover:bg-purple-700"
+                />
+            </div>
 
-                    <!-- Totais -->
-                    <div class="col-span-1 mt-3 p-4 bg-white border border-gray-200 rounded-xl shadow-lg">
-                        <div v-if="!purchase.is_execute" class="flex items-center p-3 bg-orange-100 border border-orange-300 text-orange-800 rounded-md mb-4">
-                            <span>É preciso **iniciar a execução** para ver/editar os dados.</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-700 border-b pb-2 mb-2">Resumo da Execução</h3>
-                        <div class="mt-2 flex justify-between">
-                            <p class="text-lg font-medium text-gray-600">Quantidade Total:</p>
-                            <p class="text-xl font-extrabold text-green-600">{{ purchase.is_execute ? totalAmount : '***' }}</p>
-                        </div>
-                        <div class="flex justify-between">
-                            <p class="text-lg font-medium text-gray-600">Valor Total:</p>
-                            <p class="text-xl font-extrabold text-green-600">{{ purchase.is_execute ? totalPriceFormatted : '***' }}</p>
-                        </div>
+            <!-- Status Alert -->
+            <div 
+                v-if="!purchase.is_execute"
+                class="bg-orange-50 border-l-4 border-orange-400 rounded-lg p-4 shadow-sm"
+            >
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
                     </div>
-                    
-                    <!-- Lista de Itens (Formulário) -->
-                    <div v-if="purchase.is_execute" class="col-span-1 mt-6">
-                        <div v-if="loading" class="text-center p-8 text-gray-500">
-                            Carregando itens...
-                        </div>
-                        <form v-else action="" class="grid grid-cols-1 gap-4">
-                            <div v-for="(item, index) in formdata" :key="index" 
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-orange-800">
+                            Execução não iniciada
+                        </p>
+                        <p class="text-sm text-orange-700 mt-1">
+                            É preciso <strong>iniciar a execução</strong> para ver e editar os dados dos produtos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals Card -->
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Resumo da Execução</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <p class="text-sm font-medium text-gray-600">Quantidade Total</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">
+                            {{ purchase.is_execute ? totalAmount : '—' }}
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <p class="text-sm font-medium text-gray-600">Valor Total</p>
+                        <p class="text-2xl font-bold text-orange-600 mt-1">
+                            {{ purchase.is_execute ? totalPriceFormatted : '—' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Section -->
+            <section v-if="purchase.is_execute" class="space-y-4">
+                <div v-if="loading" class="text-center p-10 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex justify-center items-center space-x-3">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                        <span class="text-gray-600 font-medium">Carregando itens...</span>
+                    </div>
+                </div>
+
+                <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">Itens Comprados</h3>
+                        
+                        <div class="space-y-4">
+                            <div 
+                                v-for="(item, index) in formdata" 
+                                :key="index" 
                                 :class="[
-                                    'p-4 rounded-xl shadow-md relative border',
-                                    isMyItem(item) ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-100 border-gray-300'
+                                    'rounded-lg p-4 border transition-all duration-200 relative group',
+                                    isMyItem(item) 
+                                        ? 'bg-indigo-50 border-indigo-200 hover:border-indigo-300' 
+                                        : 'bg-gray-100 border-gray-300'
                                 ]"
                             >
-                                <div v-if="!isMyItem(item)" class="absolute top-0 left-0 right-0 bottom-0 bg-gray-100 opacity-50 z-10 rounded-xl pointer-events-none"></div>
+                                <!-- Item Badge -->
+                                <div class="absolute -top-2 left-4 z-20">
+                                    <span
+                                        v-if="isMyItem(item) && item.id"
+                                        class="bg-indigo-600 text-white text-xs px-3 py-1 rounded-full shadow-md font-medium"
+                                    >
+                                        Meu Item
+                                    </span>
+                                    <span
+                                        v-else-if="!isMyItem(item)"
+                                        class="bg-gray-600 text-white text-xs px-3 py-1 rounded-full shadow-md font-medium"
+                                    >
+                                        Outro Usuário
+                                    </span>
+                                    <span
+                                        v-else-if="!item.id"
+                                        class="bg-green-600 text-white text-xs px-3 py-1 rounded-full shadow-md font-medium"
+                                    >
+                                        Novo Item
+                                    </span>
+                                </div>
 
-                                <span v-if="isMyItem(item) && item.id" class="absolute top-[-10px] left-3 bg-indigo-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md z-20">
-                                    Meu item
-                                </span>
-                                <span v-else-if="!isMyItem(item)" class="absolute top-[-10px] left-3 bg-gray-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md z-20">
-                                    De Outro Usuário
-                                </span>
+                                <!-- Overlay for other users' items -->
+                                <div
+                                    v-if="!isMyItem(item)"
+                                    class="absolute inset-0 bg-gray-100/50 rounded-lg pointer-events-none"
+                                ></div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-10 gap-3 md:gap-4 items-center relative z-20">
-                                    <div class="col-span-1 md:col-span-7">
-                                        <div class="flex flex-col relative">
-                                            <label class="text-sm font-medium text-gray-500 mb-1">Título:</label>
-                                            <input 
-                                                v-model="item.name" 
-                                                type="text" 
-                                                placeholder="Título do Item" 
-                                                :disabled="!isMyItem(item)"
-                                                :class="['border-2 rounded-lg py-2 px-3 transition duration-150', isMyItem(item) ? 'bg-white border-indigo-300 focus:border-indigo-500' : 'bg-gray-200 border-gray-400 cursor-not-allowed']"
-                                            >
-                                        </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                                    <!-- Item Name -->
+                                    <div class="lg:col-span-7">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Nome do Item
+                                        </label>
+                                        <input 
+                                            v-model="item.name" 
+                                            type="text" 
+                                            placeholder="Digite o nome do item..."
+                                            :disabled="!isMyItem(item)"
+                                            :readonly="purchase.is_closed"
+                                            :class="[
+                                                'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200',
+                                                isMyItem(item)
+                                                    ? 'border-indigo-300 focus:ring-indigo-500 bg-white'
+                                                    : 'border-gray-400 bg-gray-200 cursor-not-allowed'
+                                            ]"
+                                        >
                                     </div>
-                                    <div class="grid grid-cols-10 gap-3 col-span-1 md:col-span-3">
-                                        <div class="col-span-4 md:col-span-3">
-                                            <div class="flex flex-col relative">
-                                                <label class="text-sm font-medium text-gray-500 mb-1">Qtd:</label>
+                                    
+                                    <!-- Quantity and Price -->
+                                    <div class="lg:col-span-5">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                    Quantidade
+                                                </label>
                                                 <input 
                                                     v-model="item.amount" 
                                                     type="number" 
-                                                    placeholder="Qtd." 
+                                                    placeholder="0"
                                                     :disabled="!isMyItem(item)"
-                                                    :class="['border-2 rounded-lg py-2 px-3 transition duration-150', isMyItem(item) ? 'bg-white border-indigo-300 focus:border-indigo-500' : 'bg-gray-200 border-gray-400 cursor-not-allowed']"
+                                                    :readonly="purchase.is_closed"
+                                                    :class="[
+                                                        'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 text-center',
+                                                        isMyItem(item)
+                                                            ? 'border-indigo-300 focus:ring-indigo-500 bg-white'
+                                                            : 'border-gray-400 bg-gray-200 cursor-not-allowed'
+                                                    ]"
                                                 >
                                             </div>
-                                        </div>
-                                        <div class="col-span-6 md:col-span-7">
-                                            <div class="flex flex-col relative">
-                                                <label class="text-sm font-medium text-gray-500 mb-1">Preço:</label>
-                                                <div :class="['flex items-center border-2 rounded-lg transition duration-150', isMyItem(item) ? 'bg-white border-indigo-300 focus-within:border-indigo-500' : 'bg-gray-200 border-gray-400 cursor-not-allowed']">
-                                                    <span class="text-gray-500 font-semibold ml-2">R$</span>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                    Preço (R$)
+                                                </label>
+                                                <div :class="[
+                                                    'relative rounded-lg border transition-all duration-200',
+                                                    isMyItem(item)
+                                                        ? 'border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent'
+                                                        : 'border-gray-400 bg-gray-200'
+                                                ]">
+                                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                                                        R$
+                                                    </span>
                                                     <input
                                                         v-model="item.price"
                                                         type="text"
                                                         placeholder="0,00"
                                                         :disabled="!isMyItem(item)"
-                                                        :class="['w-full py-2 pl-1 pr-3 focus:outline-none rounded-r-lg', isMyItem(item) ? 'bg-white' : 'bg-gray-200 cursor-not-allowed']"
+                                                        :readonly="purchase.is_closed"
                                                         @input="formatPrice($event, index)"
+                                                        :class="[
+                                                            'w-full pl-10 pr-3 py-2 bg-transparent focus:outline-none rounded-lg',
+                                                            isMyItem(item) ? '' : 'cursor-not-allowed'
+                                                        ]"
                                                     >
                                                 </div>
                                             </div>
@@ -446,36 +567,77 @@
                                     </div>
                                 </div>
                                 
-                                <div v-if="formdata.length > 0 && isMyItem(item)" class="absolute top-[-10px] right-[-10px] z-30">
-                                    <button @click.prevent="removeItem(index, item)" class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-transform hover:scale-110 shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <!-- Delete Button -->
+                                <div 
+                                    v-if="formdata.length > 0 && isMyItem(item) && !purchase.is_closed" 
+                                    class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                >
+                                    <button 
+                                        @click.prevent="removeItem(index, item)" 
+                                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                             <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1v1zM4.5 4h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM11 2H5v1h6V2z"/>
                                         </svg>
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div class="col-span-1 mt-4">
-                                <div class="flex items-center justify-between">
-                                    <button @click.prevent="addNewItem" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg shadow-md transition duration-300">
-                                        Adicionar Novo Item
-                                    </button>
-                                    <!-- ATENÇÃO: Se o botão 'Salvar' também finaliza, o nome é confuso. Sugiro separar o Salvar do Finalizar. -->
-                                    <Button @click.prevent="send()" label="Salvar e Finalizar" color="bg-green-700" class="hover:bg-green-800" />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
 
-                    <div v-else class="col-span-1 mt-4">
-                        <div class="flex justify-center p-8 bg-gray-100 rounded-lg text-gray-600">
-                            <span>Inicie a execução para ver os produtos.</span>
+                        <!-- Action Buttons -->
+                        <div 
+                            v-if="!purchase.is_closed" 
+                            class="flex flex-col sm:flex-row justify-between items-center pt-6 mt-6 border-t border-gray-200 space-y-4 sm:space-y-0"
+                        >
+                            <button 
+                                @click.prevent="addNewItem" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span>Adicionar Item</span>
+                            </button>
+                            
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                                <button 
+                                    @click.prevent="savedItens()" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>Salvar Itens</span>
+                                </button>
+                                <button 
+                                    @click.prevent="finishPurchase()" 
+                                    class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>Finalizar Compra</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-            </div>
+            </section>
+
+            <!-- Empty State -->
+            <section v-else class="max-w-2xl mx-auto w-full">
+                <div class="bg-gray-50 rounded-xl p-10 text-center border border-gray-200">
+                    <div class="text-gray-400 mb-3">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 font-medium">
+                        Inicie a execução para ver e registrar os produtos comprados.
+                    </p>
+                </div>
+            </section>
         </div>
     </main>
 </template>

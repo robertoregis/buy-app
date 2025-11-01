@@ -174,164 +174,185 @@
 </script>
 
 <template>
-  <main class="container mx-auto">
-    <div class="grid grid-cols">
-      <div class="col-span-1 mt-4">
-          <h2 class="text-center text-2xl font-[600]">Amigos</h2>
+  <main class="container mx-auto px-4 max-w-6xl">
+    <div class="space-y-8">
+      <!-- Header -->
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl font-bold text-gray-800">Meus Amigos</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          Conecte-se e compartilhe compras com seus amigos
+        </p>
       </div>
 
-      <div class="col-span-1 mt-4">
-        <div class="flex justify-center items-center">
-          <NuxtLink to="/conta/amigos/pedidos" class="bg-green-700 text-white px-5 py-1 rounded">Pedidos</NuxtLink>
+      <!-- Action Buttons -->
+      <div class="flex justify-center space-x-4">
+        <NuxtLink 
+          to="/conta/amigos/pedidos" 
+          class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
+          <span>Ver Pedidos</span>
+        </NuxtLink>
+        
+        <NuxtLink 
+          to="/conta/amigos/criar-pedido" 
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>Adicionar Amigo</span>
+        </NuxtLink>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center items-center p-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+
+      <!-- Friends Grid -->
+      <div v-else class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-gray-800">
+            Lista de Amigos
+          </h3>
+          <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+            {{ friends.length }} amigo{{ friends.length !== 1 ? 's' : '' }}
+          </span>
         </div>
-      </div>
-      <div class="col-span-1 mt-6">
-          <div class="grid grid-cols-1">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              <template v-for="friend in friends" :key="friend.id">
-                <div @click="showUser(friend)" role="dialog" tabindex="0" class="cursor-pointer col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                  <div class="flex flex-col">
-                    <div class="flex justify-end">
-                      <span class="font-weight-500 text-[0.650rem]">{{ convertDateFirestoreFriends(friend.created_at) }}</span>
-                    </div>
-                    <div class="flex items-center mt-1">
-                      <div class="w-[42px] h-[42px] rounded-full bg-blue-200"></div>
-                      <span class="ml-3">{{ friend.userThey.name }}</span>
-                    </div>
-                  </div>
-                </div>
-              </template>
 
-                <!--<div class="col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                  <div class="flex flex-col">
-                    <div class="flex justify-end">
-                      <div class="flex items-center">
-                        <button class="flex">
-                          <Icon name="mdi:close-circle" class="text-red-700 text-xl" />
-                        </button>
-                        <button class="flex ml-1">
-                          <Icon name="mdi:check-circle" class="text-green-700 text-xl" />
-                        </button>
-                      </div>
-                    </div>
-                    <div class="flex items-center mt-1">
-                      <div class="w-[42px] h-[42px] rounded-full bg-blue-200"></div>
-                      <span class="ml-3">Nome da pessoa</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                  <div class="flex flex-col">
-                    <div class="flex justify-end">
-                      <div class="flex items-center">
-                        <button class="flex">
-                          <Icon name="mdi:plus-box" class="text-green-700 text-xl" />
-                        </button>
-                      </div>
-                    </div>
-                    <div class="flex items-center mt-1">
-                      <div class="w-[42px] h-[42px] rounded-full bg-blue-200"></div>
-                      <span class="ml-3">Nome da pessoa</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                  <div class="flex flex-col">
-                    <div class="flex justify-end">
-                      <div class="flex items-center">
-                        <button class="flex">
-                          <Icon name="mdi:close-circle" class="text-red-700 text-xl" />
-                        </button>
-                      </div>
-                    </div>
-                    <div class="flex items-center mt-1">
-                      <div class="w-[42px] h-[42px] rounded-full bg-blue-200"></div>
-                      <span class="ml-3">Nome da pessoa</span>
-                    </div>
-                  </div>
-                </div>-->
-
-              </div>
-          </div>
-      </div>
-    </div>
-  </main>
-  <!--
-  <main>
-    <div class="container p-6">
-      <div class="grid grid-cols-1">
-        <div class="w-[100%] max-w-[1000px]">
-          <div class="grid grid-cols-1">
-            <div class="col-span-1">
-              <div class="grid grid-cols-1 mt-4">
-                <div class="col-span-1">
-                  <div class="grid grid-cols-1 bg-white p-2 shadow-lg border-1 border-neutral-200">
-                    <div class="col-span-1">
-                      <h2 class="text-lg mb-0">Amigos</h2>
-                    </div>
-                    <div class="col-span-1 mt-2">
-                      <div class="flex items-center">
-                        <div class="w-[42px] h-[42px] rounded-full bg-blue-200"></div>
-                        <span class="ml-3">Nome da pessoa</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 mt-4">
-                <div class="col-span-1">
-                  <div class="grid grid-cols-1 bg-white p-2 shadow-lg border-1 border-neutral-200">
-                    <div class="col-span-1">
-                      <div class="w-[68px] h-[68px] rounded-full bg-blue-200"></div>
-                      <h2 class="text-lg mb-0">Fulano</h2>
-                    </div>
-                    <div class="col-span-1 mt-2">
-                      <div class="flex flex-col">
-                        <div class="flex items-center">
-                          <span>Amizade desde:</span>
-                          <span class="ml-2 font-weight-500">29/10/2025</span>
-                        </div>
-                        <div class="flex items-center">
-                          <span>Compras feitas com você:</span>
-                          <span class="ml-2 font-weight-500">21</span>
-                        </div>
-                        <div class="flex items-center">
-                          <span>Ranking de amizade:</span>
-                          <span class="ml-2 font-weight-500">1˚</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="col-span-1 mt-4">
-                      <div class="grid grid cols-1">
-                        <div class="col-span-1">
-                          <h1 class="mb-0 text-xl">Organizações que os dois participam juntos</h1>
-                        </div>
-                        <div class="col-span-1 mt-2">
-                          <grid class="grid-cols-1 gap-2">
-                            <div class="col-span-1 bg-teal-100 p-2 shadow rounded">
-                              <div class="flex items-center">
-                                <span>dkdkkdkddk</span>
-                                <span>dllddlld</span>
-                              </div>
-                            </div>
-                          </grid>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        <div v-if="friends.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="friend in friends" 
+            :key="friend.id"
+            @click="showUser(friend)"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+          >
+            <!-- Friend Info -->
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="flex-shrink-0 relative">
+                <img 
+                  :src="friend.userThey.image_url || '/placeholder-user.png'" 
+                  :alt="friend.userThey.name"
+                  class="w-16 h-16 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
+                />
+                <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
               </div>
               
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-gray-800 text-lg group-hover:text-blue-600 transition-colors truncate">
+                  {{ friend.userThey.name }}
+                </h3>
+                <p class="text-gray-500 text-sm truncate">
+                  {{ friend.userThey.email }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Friendship Info -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div class="flex items-center space-x-2 text-gray-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-xs font-medium">
+                  Amigos desde {{ convertDateFirestoreFriends(friend.created_at) }}
+                </span>
+              </div>
+              
+              <!-- View Profile -->
+              <div class="text-blue-500 group-hover:text-blue-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+          <div class="text-gray-400 mb-4">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-gray-600 font-medium text-lg mb-2">Nenhum amigo encontrado</h3>
+          <p class="text-gray-500 mb-6">Adicione amigos para compartilhar compras e grupos</p>
+          <div class="flex justify-center space-x-4">
+            <NuxtLink 
+              to="/conta/amigos/criar-pedido" 
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              Adicionar Amigo
+            </NuxtLink>
+            <NuxtLink 
+              to="/conta/amigos/pedidos" 
+              class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              Ver Pedidos
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="friends.length > 0" class="flex justify-center">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <div class="flex items-center space-x-1">
+              <!-- Previous Button -->
+              <button 
+                v-if="currentPage > 1"
+                @click="changeGetFriends(false, 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <div 
+                v-else
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </div>
+
+              <!-- Current Page -->
+              <div class="px-4 py-2">
+                <span class="text-gray-700 font-semibold">
+                  Página {{ currentPage }}
+                </span>
+              </div>
+
+              <!-- Next Button -->
+              <button 
+                v-if="nextPage"
+                @click="changeGetFriends(false, 2)"
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <div 
+                v-else
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </main>-->
+  </main>
+
+  <!-- Modal (Keep exactly as it is) -->
   <Participant v-model="isShowUserFriend" :participant="userFriendSelected" />
 </template>
 

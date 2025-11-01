@@ -6,39 +6,216 @@
     const router = useRouter();
     const params = useParams();
     const authentication = useAuthentication();
+    
+    // Estado para menu mobile
+    const isMobileMenuOpen = ref<boolean>(false);
 
     const navigation = (url: string) => {
-        router.push(url)
+        router.push(url);
+        isMobileMenuOpen.value = false; // Fecha menu mobile após navegação
     }
 
     const goGroups = () => {
-        authentication.setGroup({})
-        router.push('/conta/grupos')
+        authentication.setGroup({});
+        router.push('/conta/grupos');
+        isMobileMenuOpen.value = false;
     }
+
+    // Fecha menu mobile ao redimensionar para desktop
+    const handleResize = () => {
+        if (window.innerWidth >= 768) {
+            isMobileMenuOpen.value = false;
+        }
+    }
+
+    onMounted(() => {
+        window.addEventListener('resize', handleResize);
+    })
+
+    onBeforeUnmount(() => {
+        window.removeEventListener('resize', handleResize);
+    })
 </script>
 
 <template>
-    <div class="min-h-screen w-full bg-white flex flex-col">
+    <div class="min-h-screen w-full bg-gray-50 flex flex-col">
         <!-- Topbar -->
-        <header class="h-16 bg-gray-600 shadow-md flex items-center justify-between px-4 text-white">
-            <h1 class="text-lg font-bold">Gerenciador</h1>
-            <div class="flex items-center">
-                <ButtonIcon @click="navigation(`/conta/amigos`)" icon="mdi:account-group" color="border-white border-1" iconClass="" class="mr-3" />
-                <ButtonIcon v-if="params.routeCurrent !== 'purchases' && Object.keys(authentication.group || {}).length" @click="navigation(`/conta/compras`)" icon="mdi:newspaper" label="Compras" color="border-white border-1" iconClass="" class="mr-3" />
-                <ButtonIcon v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length" @click="goGroups" icon="mdi:newspaper" label="Grupos" color="border-white border-1" iconClass="" class="mr-3" />
-                <ButtonIcon @click="navigation(`/`)" icon="mdi:reply-outline" label="Sair" color="border-white border-1" iconClass="" class="mr-3" />
-                <ButtonIcon @click="navigation(`/configuracao`)" icon="mdi:cog" color="border-white border-1" iconClass="" />
+        <header class="h-16 bg-gradient-to-r from-gray-700 to-gray-800 shadow-lg flex items-center justify-between px-4 md:px-6 text-white sticky top-0 z-50">
+            <!-- Logo e Título -->
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center shadow-md">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h1 class="text-lg font-bold hidden sm:block">Gerenciador de Compras</h1>
+                <h1 class="text-lg font-bold sm:hidden">GC</h1>
             </div>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-2">
+                <button 
+                    @click="navigation('/conta/amigos')"
+                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                >
+                    <Icon name="mdi:account-group" class="text-lg" />
+                    <span class="text-sm font-medium">Amigos</span>
+                </button>
+
+                <button 
+                    v-if="params.routeCurrent !== 'purchases' && Object.keys(authentication.group || {}).length"
+                    @click="navigation('/conta/compras')"
+                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                >
+                    <Icon name="mdi:cart" class="text-lg" />
+                    <span class="text-sm font-medium">Compras</span>
+                </button>
+
+                <button 
+                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
+                    @click="goGroups"
+                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                >
+                    <Icon name="mdi:account-group" class="text-lg" />
+                    <span class="text-sm font-medium">Grupos</span>
+                </button>
+
+                <button 
+                    @click="navigation('/configuracao')"
+                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                >
+                    <Icon name="mdi:cog" class="text-lg" />
+                    <span class="text-sm font-medium">Configurações</span>
+                </button>
+
+                <button 
+                    @click="navigation('/')"
+                    class="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
+                >
+                    <Icon name="mdi:logout" class="text-lg" />
+                    <span class="text-sm font-medium">Sair</span>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button 
+                @click="isMobileMenuOpen = !isMobileMenuOpen"
+                class="md:hidden flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200"
+            >
+                <Icon 
+                    :name="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" 
+                    class="text-xl" 
+                />
+            </button>
         </header>
 
+        <!-- Mobile Menu -->
+        <div 
+            v-if="isMobileMenuOpen"
+            class="md:hidden fixed inset-x-0 top-16 bg-gray-800 shadow-lg z-40 animate-slideDown"
+        >
+            <div class="px-4 py-3 space-y-2">
+                <button 
+                    @click="navigation('/conta/amigos')"
+                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:account-group" class="text-xl" />
+                    <span class="font-medium">Amigos</span>
+                </button>
+
+                <button 
+                    v-if="params.routeCurrent !== 'purchases' && Object.keys(authentication.group || {}).length"
+                    @click="navigation('/conta/compras')"
+                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:cart" class="text-xl" />
+                    <span class="font-medium">Compras</span>
+                </button>
+
+                <button 
+                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
+                    @click="goGroups"
+                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:account-group" class="text-xl" />
+                    <span class="font-medium">Grupos</span>
+                </button>
+
+                <button 
+                    @click="navigation('/configuracao')"
+                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:cog" class="text-xl" />
+                    <span class="font-medium">Configurações</span>
+                </button>
+
+                <button 
+                    @click="navigation('/')"
+                    class="w-full flex items-center space-x-3 bg-red-500 hover:bg-red-600 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:logout" class="text-xl" />
+                    <span class="font-medium">Sair</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Overlay para Mobile -->
+        <div 
+            v-if="isMobileMenuOpen"
+            @click="isMobileMenuOpen = false"
+            class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+        ></div>
+
         <!-- Conteúdo da Página -->
-        <main class="flex-1 overflow-auto p-4">
-            <slot />
+        <main class="flex-1 overflow-auto p-4 md:p-6 max-w-7xl mx-auto w-full">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)]">
+                <slot />
+            </div>
         </main>
 
-        <!-- Footer opcional -->
-        <footer class="h-12 bg-gray-600 flex items-center justify-center text-sm text-white">
-            © 2025
+        <!-- Footer -->
+        <footer class="h-12 bg-gradient-to-r from-gray-700 to-gray-800 flex items-center justify-center text-sm text-gray-300 shadow-inner">
+            <div class="flex items-center space-x-4">
+                <span>© 2025 Gerenciador de Compras</span>
+                <span class="hidden sm:block">•</span>
+                <span class="hidden sm:block">Feito com 💚</span>
+            </div>
         </footer>
     </div>
 </template>
+
+<style scoped>
+.animate-slideDown {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom scrollbar para o main */
+main::-webkit-scrollbar {
+    width: 6px;
+}
+
+main::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>

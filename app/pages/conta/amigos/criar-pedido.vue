@@ -130,82 +130,224 @@
 </script>
 
 <template>
-  <main class="container mx-auto">
-    <div class="grid grid-cols">
-      <div class="col-span-1 mt-4">
-          <h2 class="text-center text-2xl font-[600]">Criar pedido de amizade</h2>
+  <main class="container mx-auto px-4 max-w-4xl">
+    <div class="space-y-8">
+      <!-- Header -->
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl font-bold text-gray-800">Enviar Pedido de Amizade</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          Pesquise por usuários para enviar solicitações de amizade
+        </p>
       </div>
 
-      <div class="col-span-1 mt-4">
-        <div class="grid grid-cols-1">
-          <div class="col-span-1">
-            <div class="flex flex-col">
-              <h2 class="font-weight-500">Pesquise o possível amigo pelo nome.</h2>
+      <!-- Search Section -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="space-y-4">
+          <!-- Instructions -->
+          <div class="text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
             </div>
-            <div class="flex items-center max-w-[500px] justify-bettwen mt-2">
-              <div class="flex flex-col relative w-[400px]">
-                <label v-if="search" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">Nome:</label>
-                <input @keyup.enter="search.length > 3 ? getUsers() : null" v-model="search" type="text" name="" id="" placeholder="Nome" :class="`${search ? 'mt-1' : ''}`" class="border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-              </div>
-              <Button @click="getUsers" label="Pesquisar" color="bg-green-700 ml-3" :class="`${search.length < 4 ? 'my-button-disable' : ''}`" />
-              <Button @click="clear" label="Limpar" color="bg-gray-700 ml-3" :class="`${search.length < 1 ? 'my-button-disable' : ''}`" />
-            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">
+              Pesquise pelo nome do usuário
+            </h3>
+            <p class="text-gray-500 text-sm">
+              Digite pelo menos 4 caracteres para buscar usuários
+            </p>
           </div>
 
-          <div v-if="loadedSearch" class="col-span-1 mt-4">
-            <p class="font-[600]">Encontrados</p>
-            <div v-if="usersFound.length > 0" class="grid grid-cols-3 gap-3">
-              <template v-for="user in usersFound" :key="user.id">
-              <div class="col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                <div class="flex flex-col">
-                  <div class="flex justify-end">
-                    <div class="flex items-center">
-                      <button @click="userAdd(user)" class="flex cursor-pointer">
-                        <Icon name="mdi:plus-box" class="text-green-700 text-lg" />
-                      </button>
-                    </div>
-                  </div>
-                  <div class="flex items-center mt-1">
-                    <div class="w-[30px] h-[30px] rounded-full bg-blue-200"></div>
-                    <span class="ml-3 text-sm">{{ user.name }}</span>
-                  </div>
-                </div>
-              </div>
-              </template>
-            </div>
-            <div v-else class="">
-              <span>Nenhum usuário foi encontrado</span>
-            </div>
-          </div>
-
-          <!--<div class="col-span-1 mt-4">
-            <p class="font-[600]">Adicionados</p>
-            <div v-if="usersAdded.length > 0" class="grid grid-cols-3 gap-3">
-              <div class="col-span-1 shadow-lg bg-white p-2 border-1 border-neutral-200">
-                <div class="flex flex-col">
-                  <div class="flex justify-end">
-                    <div class="flex items-center">
-                      <button class="flex cursor-pointer">
-                        <Icon name="mdi:close-circle" class="text-red-700 text-lg" />
-                      </button>
-                    </div>
-                  </div>
-                  <div class="flex items-center mt-1">
-                    <div class="w-[30px] h-[30px] rounded-full bg-blue-200"></div>
-                    <span class="ml-3 text-sm">Nome da pessoa</span>
-                  </div>
+          <!-- Search Form -->
+          <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <div class="flex-1 max-w-md">
+              <div class="relative">
+                <input 
+                  v-model="search"
+                  @keyup.enter="search.length > 3 ? getUsers() : null"
+                  type="text" 
+                  placeholder="Digite o nome do usuário..."
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white pl-11"
+                >
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
                 </div>
               </div>
             </div>
-            <div v-else class="">
-              <span>Nenhum usuário foi adicionado</span>
+            
+            <div class="flex gap-3">
+              <button 
+                @click="getUsers"
+                :disabled="search.length < 4"
+                :class="[
+                  'px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2',
+                  search.length >= 4 
+                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span>Pesquisar</span>
+              </button>
+              
+              <button 
+                @click="clear"
+                :disabled="search.length < 1"
+                :class="[
+                  'px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2',
+                  search.length >= 1 
+                    ? 'bg-gray-600 hover:bg-gray-700 text-white shadow-sm hover:shadow-md' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span>Limpar</span>
+              </button>
             </div>
-          </div>-->
+          </div>
         </div>
-        
+      </div>
+
+      <!-- Search Results -->
+      <div v-if="loadedSearch" class="space-y-6">
+        <!-- Results Header -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-gray-800">
+            Resultados da Pesquisa
+          </h3>
+          <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+            {{ usersFound.length }} usuário{{ usersFound.length !== 1 ? 's' : '' }} encontrado{{ usersFound.length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+
+        <!-- Users Grid -->
+        <div v-if="usersFound.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="user in usersFound" 
+            :key="user.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200"
+          >
+            <!-- User Info -->
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="flex-shrink-0">
+                <img 
+                  :src="user.image_url || '/placeholder-user.png'" 
+                  :alt="user.name"
+                  class="w-12 h-12 rounded-full border-2 border-gray-200"
+                />
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-gray-800 text-lg truncate">
+                  {{ user.name }}
+                </h4>
+                <p class="text-gray-500 text-sm truncate">
+                  {{ user.email }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Add Friend Button -->
+            <button 
+              @click="userAdd(user)"
+              class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+              </svg>
+              <span>Enviar Pedido</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- No Results -->
+        <div v-else class="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+          <div class="text-gray-400 mb-3">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-gray-600 font-medium text-lg mb-2">Nenhum usuário encontrado</h3>
+          <p class="text-gray-500">
+            Tente buscar com outros termos ou verifique a ortografia
+          </p>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="usersFound.length > 0" class="flex justify-center">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <div class="flex items-center space-x-1">
+              <!-- Previous Button -->
+              <button 
+                v-if="currentPage > 1"
+                @click="changeGetUsers(false, 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <div 
+                v-else
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </div>
+
+              <!-- Current Page -->
+              <div class="px-4 py-2">
+                <span class="text-gray-700 font-semibold">
+                  Página {{ currentPage }}
+                </span>
+              </div>
+
+              <!-- Next Button -->
+              <button 
+                v-if="nextPage"
+                @click="changeGetUsers(false, 2)"
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <div 
+                v-else
+                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Initial State -->
+      <div v-else class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+        <div class="text-gray-400 mb-4">
+          <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-gray-600 font-medium text-lg mb-2">Busque por usuários</h3>
+        <p class="text-gray-500">
+          Digite o nome de um usuário acima para começar a busca
+        </p>
       </div>
     </div>
   </main>
+
+  <!-- Modal (Keep exactly as it is) -->
   <CreateFriendRequest v-model="isCreateFriendRequest" :users="usersFormData" />
 </template>
 

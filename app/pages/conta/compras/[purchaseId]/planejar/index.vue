@@ -24,6 +24,9 @@
     const purchaseItens = ref<any[]>([])
     const itensDeleted = ref<any[]>([])
     const myInterval = ref<any>(null)
+    const groupId = ref<any>(null)
+
+    const unsubscribeSnapshot = ref<any>(null);
 
     // Adicione esta linha junto com as outras declarações de ref (purchase, loading, etc.)
     const membersData = ref<any>({})
@@ -104,7 +107,7 @@
         const purchaseRef = doc(firestore, "Groups", authentication.group.id, "Purchases", route.params.purchaseId);
 
         // Torne o callback assíncrono para usar await
-        const unsubscribe = onSnapshot(purchaseRef, async (purchaseSnap) => {
+        unsubscribeSnapshot.value = onSnapshot(purchaseRef, async (purchaseSnap) => {
             let purchaseDoc: any = null;
 
             if (purchaseSnap.exists()) {
@@ -152,6 +155,10 @@
                     
                     // Atualizar a ref reativa
                     membersData.value = newMembersData;
+                }
+
+                if(!purchase.value.planning_lock_userId) {
+                    membersInOnline()
                 }
                 
                 // --------------------------------------------------------------------
@@ -412,6 +419,7 @@
     })
 
     onMounted(() => {
+        groupId.value = authentication.group.id
         if(!Object.keys(authentication.group || {}).length) {
             router.push('/conta/grupos')
         } else {
@@ -426,9 +434,13 @@
     })
 
     onBeforeUnmount(() => {
+        if (unsubscribeSnapshot.value) {
+            unsubscribeSnapshot.value();
+            console.log('onSnapshot desinscrito.');
+        }
         clearInterval(myInterval.value)
 
-        const docRef = doc(firestore, "Groups", authentication.group.id, "Purchases", purchase.value.id);
+        const docRef = doc(firestore, "Groups", groupId.value, "Purchases", purchase.value.id);
 
         if (currentPlanner.value.userId === authentication.userId) {
             updateDoc(docRef, {
@@ -440,22 +452,26 @@
 </script>
 
 <template>
-    <main class="container mx-auto">
-        <div class="grid grid-cols">
-
-            <div class="col-span-1 mt-4">
-                <div class="flex flex-col w-full">
-                    <h2 class="text-center text-2xl font-[500]">Planejamento</h2>
-                    <h3 class="text-center text-lg font-[600]">Compra</h3>
+    <main class="container mx-auto px-4 max-w-4xl">
+        <div class="space-y-6">
+            <!-- Header Section -->
+            <div class="text-center space-y-3">
+                <div class="space-y-1">
+                    <h2 class="text-3xl font-bold text-gray-800">Planejamento</h2>
+                    <h3 class="text-xl font-semibold text-green-600">Compra</h3>
                 </div>
-                <p class="mt-2">Faça o planejamento da sua compra até antes do momento da sua compra.</p>
+                <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                    Faça o planejamento da sua compra até antes do momento da sua execução.
+                </p>
+            </div>
 
-                <div v-if="onlineMembersList.length > 0" class="col-span-1 mt-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-semibold text-gray-600">
+            <!-- Online Members -->
+            <div v-if="onlineMembersList.length > 0" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-semibold text-gray-700">
                             Online ({{ onlineMembersList.length }})
                         </span>
-
                         <div class="flex -space-x-2">
                             <div v-for="member in onlineMembersList" :key="member.userId">
                                 <div 
@@ -465,79 +481,122 @@
                                     <img
                                         :src="member.image_url || '/placeholder-user.png'" 
                                         :alt="member.name"
-                                        class="w-8 h-8 rounded-full border-2 transition-all duration-200"
+                                        class="w-8 h-8 rounded-full border-2 transition-all duration-200 hover:scale-110"
                                         :class="[
                                             member.userId === authentication.userId 
-                                                ? 'border-green-500 ring-2 ring-green-300 z-10' // Destaca o usuário logado
-                                                : 'border-white hover:border-blue-400' 
+                                                ? 'border-green-500 ring-2 ring-green-300 z-10 shadow-md' 
+                                                : 'border-white hover:border-blue-400 shadow-sm' 
                                         ]"
                                         loading="lazy"
                                     />
-
                                     <span 
                                         v-if="currentPlanner.isLocked && currentPlanner.userId === member.userId"
-                                        class="absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white bg-yellow-500"
-                                        v-tippy="{ content: 'Controle de Edição' }"
+                                        class="absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white bg-yellow-500 shadow-sm"
+                                        v-tippy="{ content: 'Editando agora' }"
                                     ></span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Lock Warning -->
+            <div v-if="currentPlanner.isLocked && currentPlanner.userId !== authentication.userId" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 shadow-sm">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-yellow-800">Outra pessoa está editando</p>
+                        <p class="text-sm text-yellow-700 mt-1">
+                            O usuário <strong>{{ currentPlannerName }}</strong> está com o controle da edição no momento.
+                        </p>
+                        <p class="text-xs text-yellow-600 mt-1">
+                            Você poderá editar quando o controle for liberado (expira automaticamente em 7 minutos).
+                        </p>
+                    </div>
                 </div>
-            <div class="col-span-1 mt-6">
-                <div class="grid grid-cols-1">
-                    <div class="col-span-1">
-                        <div class="flex justify-center items-center">
-                            <NuxtLink v-if="purchase.is_execute" :to="`/conta/compras/${route.params.purchaseId}/exibir`" class="bg-green-700 text-white px-5 py-1 rounded mr-3">Exibir</NuxtLink>
-                            <NuxtLink v-if="!purchase.is_execute && canUserEdit" :to="`/conta/compras/${route.params.purchaseId}/executar`" class="bg-green-700 text-white px-5 py-1 rounded">Executar</NuxtLink>
-                        </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-center space-x-4">
+                <NuxtLink 
+                    v-if="purchase.is_execute" 
+                    :to="`/conta/compras/${route.params.purchaseId}/exibir`" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
+                >
+                    Exibir Compra
+                </NuxtLink>
+                <NuxtLink 
+                    v-if="!purchase.is_execute && canUserEdit" 
+                    :to="`/conta/compras/${route.params.purchaseId}/executar`" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
+                >
+                    Executar Compra
+                </NuxtLink>
+            </div>
+
+            <!-- Totals Card -->
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Resumo dos Totais</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <p class="text-sm font-medium text-gray-600">Quantidade Total</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">{{ totalAmount }}</p>
                     </div>
-                    <div v-if="currentPlanner.isLocked && currentPlanner.userId !== authentication.userId" class="col-span-1 mt-3">
-                        <div class="flex flex-col p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
-                            <span class="font-[600]">⚠️ Outra pessoa já está planejando.</span>
-                            <span class="text-sm mt-1">O usuário **{{ currentPlannerName }}** está com o controle da edição.</span>
-                            <span class="text-xs mt-1">Você poderá editar quando o controle for liberado (expiração automática em 7 minutos).</span>
-                        </div>
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <p class="text-sm font-medium text-gray-600">Valor Total</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1">R$ {{ totalPrice.toFixed(2) }}</p>
                     </div>
-                    <div class="col-span-1 mt-6 p-4 bg-gray-100 rounded shadow">
-                        <h3 class="text-xl font-bold">Totais</h3>
-                        <div class="mt-2 flex justify-between">
-                            <p class="text-lg font-medium">Quantidade Total:</p>
-                            <p class="text-lg font-bold">{{ totalAmount }}</p>
-                        </div>
-                        <div class="flex justify-between">
-                            <p class="text-lg font-medium">Valor Total:</p>
-                            <p class="text-lg font-bold">R$ {{ totalPrice.toFixed(2) }}</p>
-                        </div>
-                    </div>
-                    <div v-if="canUserEdit" class="col-span-1 mt-1">
-                        <form action="" class="grid grid-cols-1 gap-4">
-                            <div v-for="(item, index) in formdata" :key="index" class="p-2 bg-white shadow rounded relative">
-                                <div class="grid grid-cols-1 md:grid-cols-10 gap-2 md:gap-4 items-center">
-                                    <div class="col-span-1 md:col-span-7">
-                                        <div class="flex flex-col relative">
-                                            <label v-if="item.name" class="absolute top-[-11px] left-[5px] text-gray-500" style="z-index: 100;">Título:</label>
-                                            <input v-model="item.name" type="text" placeholder="Título" class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-                                        </div>
+                </div>
+            </div>
+
+            <!-- Items Form -->
+            <div v-if="canUserEdit" class="space-y-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Itens da Compra</h3>
+                        
+                        <div class="space-y-4">
+                            <div v-for="(item, index) in formdata" :key="index" 
+                                 class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-all duration-200 relative group">
+                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                                    <!-- Item Name -->
+                                    <div class="lg:col-span-7">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Item</label>
+                                        <input 
+                                            v-model="item.name" 
+                                            type="text" 
+                                            placeholder="Digite o nome do item..."
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
+                                        >
                                     </div>
-                                    <div class="grid grid-cols-10 gap-2 col-span-1 md:col-span-3">
-                                        <div class="col-span-4 md:col-span-3">
-                                            <div class="flex flex-col relative">
-                                                <label v-if="item.amount" class="absolute top-[-11px] left-[5px] text-gray-500" style="z-index: 100;">Quantidade:</label>
-                                                <input v-model="item.amount" type="number" placeholder="Qtd." class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
+                                    
+                                    <!-- Quantity and Price -->
+                                    <div class="lg:col-span-5">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
+                                                <input 
+                                                    v-model="item.amount" 
+                                                    type="number" 
+                                                    placeholder="0"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white text-center"
+                                                >
                                             </div>
-                                        </div>
-                                        <div class="col-span-6 md:col-span-7">
-                                            <div class="flex flex-col relative">
-                                                <label v-if="item.price" class="absolute top-[-11px] left-[5px] text-gray-500" style="z-index: 100;">Preço:</label>
-                                                <div class="flex items-center mt-1 border-2 border-gray-200 rounded bg-gray-200 pl-2 pr-1">
-                                                    <span class="text-gray-500 font-semibold mr-1">R$</span>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Preço (R$)</label>
+                                                <div class="relative">
+                                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">R$</span>
                                                     <input
                                                         v-model="item.price"
                                                         type="text"
-                                                        placeholder="Preço"
-                                                        class="w-full bg-gray-200 py-1 focus:outline-none"
+                                                        placeholder="0,00"
+                                                        class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
                                                         @input="formatPrice($event, index)"
                                                     >
                                                 </div>
@@ -545,24 +604,44 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="absolute top-[-5px] right-[-5px]">
-                                    <button @click.prevent="removeItem(index, item)" class="bg-red-500 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-transform hover:scale-105 cursor-pointer">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                
+                                <!-- Delete Button -->
+                                <div v-if="!purchase.is_execute && !purchase.is_in_progress" 
+                                     class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <button 
+                                        @click.prevent="removeItem(index, item)" 
+                                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                             <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1v1zM4.5 4h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM11 2H5v1h6V2z"/>
                                         </svg>
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div v-if="!purchase.is_execute && !purchase.is_in_progress && canUserEdit" class="col-span-1 mt-4">
-                                <div class="flex items-center justify-between">
-                                    <Button @click.prevent="addNewItem" label="Adicionar novo item" color="bg-blue-500" />
-                                    <Button @click="send" label="Salvar" color="bg-green-700" />
-                                </div>
-                            </div>
-                        </form>
-                    
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="flex justify-between items-center pt-6 mt-6 border-t border-gray-200">
+                            <button 
+                                @click.prevent="addNewItem" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span>Adicionar Item</span>
+                            </button>
+                            <button 
+                                @click="send" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>Salvar Planejamento</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
