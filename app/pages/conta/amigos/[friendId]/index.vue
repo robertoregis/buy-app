@@ -32,7 +32,7 @@
             <!-- Avatar -->
             <div class="relative">
               <img 
-                src="/placeholder-user.png" 
+                src="https://firebasestorage.googleapis.com/v0/b/buy-app-8c9ec.firebasestorage.app/o/avatar.png?alt=media&token=ae2cef95-b633-491a-9394-4723e541e8e2" 
                 alt="Nome da pessoa"
                 class="w-20 h-20 rounded-full border-4 border-white shadow-lg"
               />

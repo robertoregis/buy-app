@@ -305,7 +305,7 @@
                                     <div class="flex-shrink-0">
                                         <div class="relative">
                                             <img 
-                                                :src="participant.image_url || '/placeholder-user.png'" 
+                                                :src="participant.image_url || 'https://firebasestorage.googleapis.com/v0/b/buy-app-8c9ec.firebasestorage.app/o/avatar.png?alt=media&token=ae2cef95-b633-491a-9394-4723e541e8e2'" 
                                                 :alt="participant.name"
                                                 class="w-12 h-12 rounded-full border-2 border-white shadow-sm group-hover:border-purple-200 transition-colors"
                                             />

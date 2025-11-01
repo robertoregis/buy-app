@@ -234,7 +234,7 @@
             <div class="flex items-center space-x-4 mb-4">
               <div class="flex-shrink-0 relative">
                 <img 
-                  :src="friend.userThey.image_url || '/placeholder-user.png'" 
+                  :src="friend.userThey.image_url || 'https://firebasestorage.googleapis.com/v0/b/buy-app-8c9ec.firebasestorage.app/o/avatar.png?alt=media&token=ae2cef95-b633-491a-9394-4723e541e8e2'" 
                   :alt="friend.userThey.name"
                   class="w-16 h-16 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
                 />

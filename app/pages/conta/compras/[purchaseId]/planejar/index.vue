@@ -479,7 +479,7 @@
                                     class="relative"
                                 >
                                     <img
-                                        :src="member.image_url || '/placeholder-user.png'" 
+                                        :src="member.image_url || 'https://firebasestorage.googleapis.com/v0/b/buy-app-8c9ec.firebasestorage.app/o/avatar.png?alt=media&token=ae2cef95-b633-491a-9394-4723e541e8e2'" 
                                         :alt="member.name"
                                         class="w-8 h-8 rounded-full border-2 transition-all duration-200 hover:scale-110"
                                         :class="[
