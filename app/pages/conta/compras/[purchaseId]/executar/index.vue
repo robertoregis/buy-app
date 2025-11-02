@@ -147,7 +147,7 @@
                     
                     // Se a compra AGORA está em execução, inicia o listener de itens.
                     // Chamamos getItens() aqui para garantir que ele comece a ouvir no momento certo.
-                    if (purchase.value.is_execute) {
+                    if (purchase.value.is_in_progress) {
                         getItens()
                     } else {
                         // Se não estiver em execução, e o listener de itens estiver ativo, 
@@ -394,7 +394,7 @@
                     Exibir Compra
                 </NuxtLink>
                 <Button
-                    v-if="!purchase.is_execute"
+                    v-if="!purchase.is_in_progress"
                     @click="execute()"
                     label="Iniciar Execução"
                     color="bg-purple-600 hover:bg-purple-700"
@@ -403,7 +403,7 @@
 
             <!-- Status Alert -->
             <div 
-                v-if="!purchase.is_execute"
+                v-if="!purchase.is_in_progress"
                 class="bg-orange-50 border-l-4 border-orange-400 rounded-lg p-4 shadow-sm"
             >
                 <div class="flex items-start space-x-3">
@@ -430,20 +430,20 @@
                     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                         <p class="text-sm font-medium text-gray-600">Quantidade Total</p>
                         <p class="text-2xl font-bold text-gray-800 mt-1">
-                            {{ purchase.is_execute ? totalAmount : '—' }}
+                            {{ purchase.is_in_progress ? totalAmount : '—' }}
                         </p>
                     </div>
                     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                         <p class="text-sm font-medium text-gray-600">Valor Total</p>
                         <p class="text-2xl font-bold text-orange-600 mt-1">
-                            {{ purchase.is_execute ? totalPriceFormatted : '—' }}
+                            {{ purchase.is_in_progress ? totalPriceFormatted : '—' }}
                         </p>
                     </div>
                 </div>
             </div>
 
             <!-- Items Section -->
-            <section v-if="purchase.is_execute" class="space-y-4">
+            <section v-if="purchase.is_in_progress" class="space-y-4">
                 <div v-if="loading" class="text-center p-10 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="flex justify-center items-center space-x-3">
                         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
@@ -517,8 +517,8 @@
                                     
                                     <!-- Quantity and Price -->
                                     <div class="lg:col-span-5">
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div>
+                                        <div class="grid grid-cols-5 sm:grid-cols-4 gap-3">
+                                            <div class="col-span-2">
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                                     Quantidade
                                                 </label>
@@ -536,7 +536,7 @@
                                                     ]"
                                                 >
                                             </div>
-                                            <div>
+                                            <div class="col-span-3 sm:col-span-2">
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                                     Preço (R$)
                                                 </label>

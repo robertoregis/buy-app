@@ -91,7 +91,8 @@
         name: data.name,
         description: data.description ?? null,
         version: data.version,
-        status: "planned",
+        status: "open",
+        status_formatted: "Aberta",
         code: data.code,
         purchase_final_id: null,
         purchase_planned_id: null,
@@ -115,8 +116,10 @@
         allow_only_creator_to_remove: true,
         planned_date: data.planned_date,
         execute_date: null,
+        init_execute_date: null,
         is_active: true,
         is_execute: false,
+        is_planned: false,
         created_at: now,
         updated_at: now,
         is_everyone_allowed: data.is_everyone_allowed ?? true
@@ -165,6 +168,8 @@
         is_closed: false,
         is_active: true,
         is_execute: false,
+        is_in_progress: false,
+        is_planned: false,
         members: [userId],
         group_id: groupId,
         purchase_group_id: purchaseRef.id,
@@ -292,10 +297,10 @@ export const initExecutePurchase = async (
 
   // 2️⃣ Atualiza ambas para marcar como executadas
   await Promise.all([
-    updateDoc(purchaseRef, { is_execute: true, updated_at: now }),
-    updateDoc(plannedRef, { is_execute: true, updated_at: now }),
-    updateDoc(finalRef, { is_execute: true, updated_at: now }),
-    updateDoc(purchaseGeralRef, { is_execute: true, updated_at: now })
+    updateDoc(purchaseRef, { is_in_progress: true, updated_at: now, status: "in_execute", status_formatted: "Em execução", init_execute_date: now }),
+    updateDoc(plannedRef, { is_in_progress: true, updated_at: now }),
+    updateDoc(finalRef, { is_in_progress: true, updated_at: now }),
+    updateDoc(purchaseGeralRef, { is_in_progress: true, updated_at: now })
   ])
 
   // 3️⃣ Busca os itens da compra planejada
@@ -350,17 +355,20 @@ export const finishedPurchase = async (
   const priceFormatted = `R$ ${price.toFixed(2).replace(".", ",")}`
   // 2️⃣ Atualiza ambas para marcar como finalizadas
   await Promise.all([
-    updateDoc(plannedRef, { is_in_progress: true, is_closed: true, updated_at: now }),
-    updateDoc(finalRef, { is_in_progress: true, is_closed: true, updated_at: now, final_price: price, final_amount: amount, final_price_formatted: priceFormatted }),
+    updateDoc(plannedRef, { is_execute: true, is_closed: true, updated_at: now }),
+    updateDoc(finalRef, { is_execute: true, is_closed: true, updated_at: now, final_price: price, final_amount: amount, final_price_formatted: priceFormatted }),
     updateDoc(purchaseRef, {
-      is_in_progress: true,
+      is_execute: true,
       is_closed: true,
       updated_at: now,
       final_price: price,
       final_amount: amount,
-      final_price_formatted: priceFormatted
+      final_price_formatted: priceFormatted,
+      status: "final",
+      status_formatted: "Executada",
+      execute_date: now
     }),
-    updateDoc(purchaseGeralRef, { is_in_progress: true, is_closed: true, updated_at: now }),
+    updateDoc(purchaseGeralRef, { is_execute: true, is_closed: true, updated_at: now }),
   ])
 
   console.log("✅ Compra finalizada com sucesso!")
@@ -398,11 +406,14 @@ export const finishedPurchase = async (
         price_planned: price,
         amount_planned: amount,
         price_planned_formatted: priceFormatted,
-        is_in_progress: true,
-        updated_at: now
+        is_planned: true,
+        planned_date: now,
+        updated_at: now,
+        status: "planned",
+        status_formatted: "Planejada"
       }),
       updateDoc(purchaseGeralRef, { 
-        is_in_progress: true,
+        is_planned: true,
         updated_at: now
       }),
     ])

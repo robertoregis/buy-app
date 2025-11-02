@@ -132,7 +132,7 @@
                                             : 'bg-orange-100 text-orange-800 border border-orange-200'
                                     ]"
                                 >
-                                    {{ purchase.is_closed ? '✅ Finalizada' : '🔄 Em andamento' }}
+                                    {{ purchase.status_formatted }}
                                 </span>
                             </div>
                         </div>
@@ -146,14 +146,14 @@
                         <div class="space-y-4">
                             <div class="flex flex-col space-y-3">
                                 <NuxtLink 
-                                    v-if="!purchase.is_in_progress"  
+                                    v-if="purchase.status === 'open'"  
                                     :to="`/conta/compras/${purchase.id}/planejar`" 
                                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
                                 >
                                     📝 Planejar Compra
                                 </NuxtLink>
                                 <NuxtLink 
-                                    v-else-if="!purchase.is_closed" 
+                                    v-else-if="purchase.status === 'planned'" 
                                     :to="`/conta/compras/${purchase.id}/executar`" 
                                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
                                 >
@@ -182,7 +182,7 @@
                         <template v-if="purchase.is_in_progress || purchase.is_closed">
                             <div v-if="purchaseItens.length > 0" class="space-y-4">
                                 <!-- Header -->
-                                <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 font-semibold text-gray-700">
+                                <div class="hidden sm:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 font-semibold text-gray-700">
                                     <div class="col-span-8 md:col-span-7">Produto</div>
                                     <div class="col-span-2 md:col-span-1 text-center">Qtd</div>
                                     <div class="col-span-2 md:col-span-4 text-right">Preço</div>
@@ -192,7 +192,7 @@
                                 <div 
                                     v-for="(item, index) in purchaseItens" 
                                     :key="index" 
-                                    class="grid grid-cols-12 gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                                    class="grid grid-cols-12 gap-2 sm:gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200"
                                 >
                                     <div class="col-span-8 md:col-span-7">
                                         <div class="flex items-center space-x-3">
@@ -203,12 +203,24 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-span-2 md:col-span-1">
+                                    <div class="sm:hidden col-span-12">
+                                        <div class="flex items-center">
+                                            <div class="flex items-center">
+                                                <span>Qtd:</span>
+                                                <span class="font-bold text-gray-800 text-lg ml-1">{{ item.amount || '—' }}</span>
+                                            </div>
+                                            <div class="flex items-center ml-4">
+                                                <span>Preço:</span>
+                                                <span class="font-bold text-green-800 text-lg ml-1">R$ {{ item.price || '—' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hidden sm:block col-span-2 md:col-span-1">
                                         <div class="text-center">
                                             <span class="font-bold text-gray-800 text-lg">{{ item.amount || '—' }}</span>
                                         </div>
                                     </div>
-                                    <div class="col-span-2 md:col-span-4">
+                                    <div class="hidden sm:block col-span-2 md:col-span-4">
                                         <div class="text-right">
                                             <span class="font-bold text-green-600 text-lg">R$ {{ item.price || '—' }}</span>
                                         </div>
@@ -217,11 +229,11 @@
 
                                 <!-- Total -->
                                 <div class="grid grid-cols-12 gap-4 px-4 py-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200 font-bold text-gray-800">
-                                    <div class="col-span-8 md:col-span-7 text-right">Total:</div>
-                                    <div class="col-span-2 md:col-span-1 text-center">
+                                    <div class="col-span-5 sm:col-span-8 md:col-span-7 text-right">Total:</div>
+                                    <div class="col-span-3 sm:col-span-2 md:col-span-1 text-center">
                                         <span class="text-lg">{{ purchaseItens.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) }}</span>
                                     </div>
-                                    <div class="col-span-2 md:col-span-4 text-right">
+                                    <div class="col-span-4 sm:col-span-2 md:col-span-4 text-right">
                                         <span class="text-xl text-green-600">{{ purchase.final_price_formatted || '—' }}</span>
                                     </div>
                                 </div>
@@ -250,10 +262,18 @@
                                 <p class="text-orange-800 font-medium text-lg">Compra não iniciada</p>
                                 <p class="text-orange-600 mt-2">Para visualizar os produtos, inicie a compra primeiro</p>
                                 <NuxtLink 
+                                    v-if="purchase.status === 'open'"
                                     :to="`/conta/compras/${purchase.id}/planejar`" 
                                     class="inline-block mt-4 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
                                 >
                                     Iniciar Planejamento
+                                </NuxtLink>
+                                <NuxtLink 
+                                    v-if="purchase.status === 'planned'"
+                                    :to="`/conta/compras/${purchase.id}/executar`" 
+                                    class="inline-block mt-4 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                                >
+                                    Iniciar Execução
                                 </NuxtLink>
                             </div>
                         </template>

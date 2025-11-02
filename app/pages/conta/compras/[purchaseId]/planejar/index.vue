@@ -578,7 +578,7 @@
                                     
                                     <!-- Quantity and Price -->
                                     <div class="lg:col-span-5">
-                                        <div class="grid grid-cols-2 gap-3">
+                                        <div class="grid grid-cols-5 sm:grid-cols-2 gap-3">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
                                                 <input 
@@ -622,7 +622,7 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="flex justify-between items-center pt-6 mt-6 border-t border-gray-200">
+                        <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="flex flex-col md:flex-row md:justify-between items-center pt-6 mt-6 border-t border-gray-200">
                             <button 
                                 @click.prevent="addNewItem" 
                                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
@@ -634,7 +634,7 @@
                             </button>
                             <button 
                                 @click="send" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

@@ -191,12 +191,12 @@
             <div v-else class="space-y-8">
                 <!-- Group Info Card -->
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div class="flex-1">
                             <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ authentication.group.name }}</h1>
                             <p class="text-gray-600 text-lg leading-relaxed">{{ authentication.group.description }}</p>
                         </div>
-                        <div class="flex-shrink-0 ml-6">
+                        <div class="md:flex-shrink-0 md:ml-6 mt-2 md:mt-0">
                             <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
                                 👑 Dono do Grupo
                             </div>
@@ -224,25 +224,25 @@
                             >
                                 <div class="space-y-3">
                                     <!-- Header -->
-                                    <div class="flex items-start justify-between">
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                                         <div class="flex-1">
                                             <h4 class="font-semibold text-gray-800 text-lg group-hover:text-blue-600 transition-colors">
                                                 {{ purchase.name }}
                                             </h4>
                                             <p class="text-gray-500 text-sm mt-1 line-clamp-2">{{ purchase.description }}</p>
                                         </div>
-                                        <div class="flex flex-col items-end space-y-2 ml-4">
+                                        <div class="flex flex-row items-center justify-between sm:justify-start sm:flex-col sm:items-end sm:ml-4 mt-2 sm:mt-0">
                                             <span 
                                                 :class="[
-                                                    'px-3 py-1 rounded-full text-xs font-semibold',
+                                                    'px-3 py-1 rounded-full text-[0.750rem] sm:text-xs font-semibold',
                                                     purchase.status === 'planned' 
                                                         ? 'bg-orange-100 text-orange-800 border border-orange-200' 
                                                         : 'bg-green-100 text-green-800 border border-green-200'
                                                 ]"
                                             >
-                                                {{ purchase.status === 'planned' ? '📝 Em Planejamento' : '✅ Executada' }}
+                                                {{ purchase.status_formatted }}
                                             </span>
-                                            <span class="text-gray-400 text-xs">10h20 19/09/2025</span>
+                                            <span class="text-gray-400 text-[0.750rem] sm:text-xs sm:mt-1">{{ purchase.planned_date }}</span>
                                         </div>
                                     </div>
 
