@@ -4,6 +4,7 @@
     import { useFirebase } from "../../../../composables/useFirebase";
     import { useParams } from '../../../../stores/params.js';
     import { useAuthentication } from '../../../../stores/authentication.js';
+    import { convertDateFirestore } from "../../../../composables/convert.js";
 
     const params = useParams();
     definePageMeta({
@@ -154,6 +155,18 @@
         return `R$ ${price.toFixed(2).replace(".", ",")}`
     }
 
+    // Calcular economia
+    const calculateSavings = (purchase: any) => {
+        const planned = Number(purchase.price_planned) || 0;
+        const final = Number(purchase.price_final) || 0;
+        const savings = planned - final;
+        return {
+            amount: savings,
+            formatted: `R$ ${Math.abs(savings).toFixed(2)}`,
+            isPositive: savings > 0
+        };
+    }
+
     const showParticipant = (participant: any) => {
         participantSelected.value = {}
         participantSelected.value = participant
@@ -242,18 +255,35 @@
                                             >
                                                 {{ purchase.status_formatted }}
                                             </span>
-                                            <span class="text-gray-400 text-[0.750rem] sm:text-xs sm:mt-1">{{ purchase.planned_date }}</span>
+                                            <span class="text-gray-400 text-[0.750rem] sm:text-xs sm:mt-1">{{ convertDateFirestore(purchase.planned_date) }}</span>
                                         </div>
                                     </div>
 
                                     <!-- Price Info -->
-                                    <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-                                        <div class="flex space-x-2">
+                                    <div class="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
+                                        <div class="flex items-center space-x-2">
                                             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm font-semibold">
-                                                {{ purchase.final_price_formatted }}
+                                                {{ purchase.final_price_formatted || 'R$ 0,00' }}
                                             </span>
-                                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-lg text-sm font-semibold">
-                                                {{ convertePrice(purchase.price_planned, purchase.price_final) }}
+                                            <span class="text-sm text-gray-600">Valor Final</span>
+                                        </div>
+                                        
+                                        <div 
+                                            v-if="calculateSavings(purchase).amount !== 0"
+                                            class="flex items-center space-x-2"
+                                        >
+                                            <span 
+                                                :class="[
+                                                    'px-3 py-1 rounded-lg text-sm font-semibold',
+                                                    calculateSavings(purchase).isPositive
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-blue-100 text-blue-800'
+                                                ]"
+                                            >
+                                                {{ calculateSavings(purchase).formatted }}
+                                            </span>
+                                            <span class="text-sm text-gray-600">
+                                                Valor planejado
                                             </span>
                                         </div>
                                     </div>

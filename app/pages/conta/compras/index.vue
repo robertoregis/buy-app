@@ -6,6 +6,7 @@
     import { useFirebase } from '../../../composables/useFirebase';
     import { useParams } from '../../../stores/params.js';
     import { useAuthentication } from '../../../stores/authentication.js';
+    import { convertDateFirestore } from '../../../composables/convert.js';
 
     const params = useParams();
     definePageMeta({
@@ -232,7 +233,7 @@
                                         >
                                             {{ purchase.status_formatted }}
                                         </span>
-                                        <span class="text-gray-400 text-[0.750rem] sm:text-xs sm:mt-1">{{ purchase.planned_date }}</span>
+                                        <span class="text-gray-400 text-[0.750rem] sm:text-xs sm:mt-1">{{ convertDateFirestore(purchase.planned_date) }}</span>
                                     </div>
                                 </div>
 

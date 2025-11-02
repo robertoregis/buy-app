@@ -578,8 +578,8 @@
                                     
                                     <!-- Quantity and Price -->
                                     <div class="lg:col-span-5">
-                                        <div class="grid grid-cols-5 sm:grid-cols-2 gap-3">
-                                            <div>
+                                        <div class="grid grid-cols-5 sm:grid-cols-4 gap-3">
+                                            <div class="col-span-2">
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
                                                 <input 
                                                     v-model="item.amount" 
@@ -588,7 +588,7 @@
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white text-center"
                                                 >
                                             </div>
-                                            <div>
+                                            <div class="col-span-3 sm:col-span-2">
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">Preço (R$)</label>
                                                 <div class="relative">
                                                     <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">R$</span>

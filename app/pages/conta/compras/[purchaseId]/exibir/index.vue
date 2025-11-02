@@ -3,6 +3,7 @@
     import { useFirebase } from "../../../../../composables/useFirebase";
     import { useParams } from '../../../../../stores/params.js';
     import { useAuthentication } from '../../../../../stores/authentication.js';
+    import { convertDateFirestore } from '../../../../../composables/convert.js';
 
     const params = useParams();
 
@@ -120,7 +121,7 @@
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <span class="text-gray-600 font-medium">Data Planejada:</span>
-                                <span class="text-gray-800 font-semibold">{{ purchase.planned_date || '—' }}</span>
+                                <span class="text-gray-800 font-semibold">{{ convertDateFirestore(purchase.planned_date) || '—' }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 font-medium">Status:</span>
