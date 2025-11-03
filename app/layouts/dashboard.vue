@@ -1,11 +1,13 @@
 <script setup lang="ts">
     import { useParams } from '../stores/params.js';
     import { useAuthentication } from '../stores/authentication.js';
+    import { signOut, getAuth } from "firebase/auth";
 
     const isModal = ref<boolean>(false);
     const router = useRouter();
     const params = useParams();
     const authentication = useAuthentication();
+    const { notify } = useNotification();
     
     // Estado para menu mobile
     const isMobileMenuOpen = ref<boolean>(false);
@@ -26,6 +28,20 @@
         if (window.innerWidth >= 768) {
             isMobileMenuOpen.value = false;
         }
+    }
+
+    const logout = async () => {
+        const auth: any = getAuth()
+        authentication.setUser({})
+        authentication.setUserId(null)
+        authentication.setGroup({})
+        authentication.setCodePurchase(null)
+        await signOut(auth);
+        notify({
+            text: "Você foi deslogado!",
+            type: "error",
+        });
+        router.push('/')
     }
 
     onMounted(() => {
@@ -89,7 +105,7 @@
                 </button>
 
                 <button 
-                    @click="navigation('/')"
+                    @click="logout()"
                     class="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
                 >
                     <Icon name="mdi:logout" class="text-lg" />
@@ -150,7 +166,7 @@
                 </button>
 
                 <button 
-                    @click="navigation('/')"
+                    @click="logout()"
                     class="w-full flex items-center space-x-3 bg-red-500 hover:bg-red-600 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:logout" class="text-xl" />

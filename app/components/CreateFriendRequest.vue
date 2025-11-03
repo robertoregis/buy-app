@@ -29,6 +29,7 @@ export default defineComponent({
     const versions = ref<any[]>([
       'Mensal', 'Quinzenal', 'Semanal', 'Avulsa'
     ])
+    const { notify } = useNotification();
     const closeModal = () => {
       isOpen.value = false;
       emit('update:modelValue', false);
@@ -48,10 +49,16 @@ export default defineComponent({
         await createFriendRequest(users.value.me, users.value.they).
           then((response: any) => {
             if(response.status === 200) {
-              alert(response.message)
+              notify({
+                text: response.message,
+                type: 'success'
+              })
               router.push(`/conta/amigos/pedidos`)
             } else if(response.status === 300) {
-              alert(response.message)
+              notify({
+                text: response.message,
+                type: 'error'
+              })
             }
             closeModal();
           })

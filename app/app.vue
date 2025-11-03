@@ -57,6 +57,7 @@
 </script>
 
 <template>
+  <NuxtNotifications position="bottom center" />
   <div v-if="!loading">
     <NuxtLayout>
       <NuxtPage />

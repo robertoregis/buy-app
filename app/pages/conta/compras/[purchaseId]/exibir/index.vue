@@ -154,7 +154,7 @@
                                     📝 Planejar Compra
                                 </NuxtLink>
                                 <NuxtLink 
-                                    v-else-if="purchase.status === 'planned'" 
+                                    v-else-if="purchase.status === 'planned' || purchase.status === 'in_execute'" 
                                     :to="`/conta/compras/${purchase.id}/executar`" 
                                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
                                 >

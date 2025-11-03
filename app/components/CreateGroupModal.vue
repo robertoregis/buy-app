@@ -26,6 +26,7 @@
       const isOpen = ref(props.modelValue);
       const newId = ref(props.newId);
       const router = useRouter();
+      const { notify } = useNotification();
       const formdata = ref<any>({
         name: null,
         description: null,
@@ -43,11 +44,17 @@
 
       const send = async () => {
         if(!formdata.value.name) {
-          alert('Escreva o nome')
+          notify({
+            text: 'Escreva o nome',
+            type: 'error'
+          })
           return
         }
         if(!formdata.value.description) {
-          alert('Escreva o descrição')
+          notify({
+            text: 'Escreva o descrição',
+            type: 'error'
+          })
           return
         }
         try {

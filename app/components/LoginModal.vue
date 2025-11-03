@@ -2,8 +2,9 @@
   import { ref, defineComponent, watch } from 'vue';
   import { vMaska } from "maska/vue";
   import { useFirebase } from '@/composables/useFirebase';
-      import { collection, getDocs, query, where, increment,
-          limit, getDoc, doc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
+  import { increment, limit, getDoc, 
+      doc, updateDoc, Timestamp, orderBy
+  } from 'firebase/firestore';
   import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
   import { useProfile } from '../composables/useProfile';
 
@@ -35,6 +36,7 @@
         email: null,
         password: null
       })
+      const { notify } = useNotification();
       const { fetchProfile } = useProfile()
       const isShowPassword = ref<boolean>(false)
       const router = useRouter();
@@ -54,11 +56,17 @@
 
       const loginWithPassword = async () => {
         if(!formdata.value.email) {
-          alert('Informe o email')
+          notify({
+            text: "Informe o email",
+            type: "error",
+          });
           return
         }
         if(!formdata.value.password) {
-          alert('Informe a senha')
+          notify({
+            text: "Informe a senha",
+            type: "error",
+          });
           return
         }
         try {
@@ -69,18 +77,24 @@
           // Aqui você chama a função do composable que busca profile, Fresh, Dashboard, etc
           const { profile, data }: any = await fetchProfile(user.uid)
           if(!profile) {
-              alert('Alguns dos seus dados estão errado, tente novamente!')
+            notify({
+              text: "Alguns dos seus dados estão errado, tente novamente!",
+              type: "error",
+            });
           }
           let dateTimestamp = Timestamp.fromDate(new Date())
           const userRef = doc(firestore, "Users", data.id);
           await updateDoc(userRef, {
-              'dashboard.total_interactions': increment(1),
-              last_login: dateTimestamp,
-              updated_at: dateTimestamp,
+            'dashboard.total_interactions': increment(1),
+            last_login: dateTimestamp,
+            updated_at: dateTimestamp,
           });
           router.push('/conta/grupos')
           setTimeout(() => {
-              alert(`O login foi feito com sucesso. Seja bem vindo!`)
+              notify({
+                text: "O login foi feito com sucesso. Seja bem vindo!",
+                type: "success",
+              });
           }, 1000)
         } catch (error: any) {
           console.log(error)

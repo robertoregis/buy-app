@@ -5,15 +5,19 @@
         email: null,
         password: null
     })
+    const { notify } = useNotification();
     const send = () => {
-        alert(`kkkk`)
+        alert(`Não disponível`)
     }
     const goRouter = () => {
         router.push(`/cadastrar`)
     }
     const next = () => {
         if(!formdata.value.email) {
-            alert('Informe o email')
+            notify({
+                text: 'Informe o email',
+                type: 'error'
+            })
             return
         }
         isLoginModal.value = true;

@@ -3,12 +3,12 @@ import { defineStore } from 'pinia';
 export interface InterfaceShow {
     token: string,
     user: object,
-    userId: string,
+    userId: string | null,
     info: object,
     profile: object,
     profileId: string,
     group: object,
-    codePurchase: string,
+    codePurchase: string | null,
     friends: object[]
 }
 
@@ -31,7 +31,7 @@ export const useAuthentication = defineStore('authentication', {
         setUser(dataUser: object) {
             this.user = dataUser
         },
-        setUserId(dataUserId: string) {
+        setUserId(dataUserId: any) {
             this.userId = dataUserId
         },
         setInfo(dataInfo: object) {
@@ -46,7 +46,7 @@ export const useAuthentication = defineStore('authentication', {
         setGroup(dataGroup: object) {
             this.group = dataGroup
         },
-        setCodePurchase(dataCodePurchase: string) {
+        setCodePurchase(dataCodePurchase: any) {
             this.codePurchase = dataCodePurchase
         },
         setFriends(dataFriends: object[]) {
@@ -60,7 +60,7 @@ export const useAuthentication = defineStore('authentication', {
         getUser(): object {
             return this.user
         },
-        getUserId(): string {
+        getUserId(): any {
             return this.userId
         },
         getInfo(): object {
@@ -75,7 +75,7 @@ export const useAuthentication = defineStore('authentication', {
         getGroup(): object {
             return this.group
         },
-        getCodePurchase(): string {
+        getCodePurchase(): any {
             return this.codePurchase
         },
         getFriends(): object[] {

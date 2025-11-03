@@ -22,7 +22,7 @@
   const docs = ref<any>([])
   const initVisible = ref<any>()
   const router = useRouter();
-
+  const { notify } = useNotification();
   const getFriendRequests = async () => {
         try {
             loading.value = true
@@ -158,7 +158,10 @@
   const recusedFriendRequest = async (friendRequest: any) => {
     try {
       await updateFriendRequest(true, friendRequest.id)
-      alert('Pedido recusado')
+      notify({
+        text: 'Pedido recusado',
+        type: 'error'
+      })
       router.push('/conta/amigos')
     } catch(error) {
       console.log(error)
@@ -172,7 +175,10 @@
         {id: authentication.user.id, name: authentication.user.name, email: authentication.user.email },
         friendRequest.id
       )
-      alert('Pedido aceito')
+      notify({
+        text: 'Pedido aceito',
+        type: 'success'
+      })
       router.push('/conta/amigos')
     } catch(error) {
       console.log(error)

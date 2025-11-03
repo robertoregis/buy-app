@@ -29,6 +29,7 @@ export default defineComponent({
     const isOpen = ref(props.modelValue);
     const newId = ref(props.newId);
     const router = useRouter();
+    const { notify } = useNotification();
     const formdata = ref<any>({
       title: null,
       description: null,
@@ -59,11 +60,18 @@ export default defineComponent({
       isOpen.value = newVal;
     });
 
+    const showNotify = (text: string, type: string) => {
+      notify({
+        text: text,
+        type: type
+      })
+    }
+
     const send = async () => {
-      if (!formdata.value.title) return alert('Escreva o nome');
-      if (!formdata.value.description) return alert('Escreva a descrição');
-      if (!formdata.value.version) return alert('Escolha a versão');
-      if (!formdata.value.date) return alert('Escreva a data');
+      if (!formdata.value.title) return showNotify('Escreva o nome', 'error');
+      if (!formdata.value.description) return showNotify('Escreva a descrição', 'error');
+      if (!formdata.value.version) return showNotify('Escolha a versão', 'error');
+      if (!formdata.value.date) return showNotify('Escreva a data', 'error');
 
       try {
         const code = generateCode(13);

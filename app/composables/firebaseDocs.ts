@@ -338,7 +338,8 @@ export const finishedPurchase = async (
   plannedPurchaseId: string,
   amount: number,
   price: number,
-  purchaseGeralId: string
+  purchaseGeralId: string,
+  priceFinalOfPurchase: any
 ) => {
   const { firestore } = useFirebase()
   const now = new Date()
@@ -366,6 +367,7 @@ export const finishedPurchase = async (
       final_price_formatted: priceFormatted,
       status: "final",
       status_formatted: "Executada",
+      price_real_final: priceFinalOfPurchase,
       execute_date: now
     }),
     updateDoc(purchaseGeralRef, { is_execute: true, is_closed: true, updated_at: now }),

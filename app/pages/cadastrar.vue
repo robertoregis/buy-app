@@ -4,31 +4,47 @@
         createUserWithEmailAndPassword, signOut } from "firebase/auth";
     // para usar o firebase
     import { useFirebase } from '@/composables/useFirebase';
-    import { collection, getDocs, query, where,
-        limit, getDoc, doc, updateDoc, Timestamp, orderBy,
-        onSnapshot, getCountFromServer, addDoc, setDoc
+    import { collection, doc, updateDoc, Timestamp, addDoc, setDoc
     } from 'firebase/firestore';
-    const { firestore } = useFirebase()
-    const router = useRouter()
-    const isLoginModal = ref<boolean>(false)
+    const { firestore } = useFirebase();
+    const router = useRouter();
+    const isLoginModal = ref<boolean>(false);
     const formdata = ref<any>({
         email: null,
         password: null,
         name: null
     })
+    const { notify } = useNotification();
     const isShowPassword = ref<boolean>(false)
     const createUser = async () => {
         if(!formdata.value.name) {
-            alert('Precisa do nome')
+            notify({
+                text: "Precisa do nome",
+                type: "error",
+            });
             return
         }
         if(!formdata.value.email) {
-            alert('Precisa do e-mail')
+            notify({
+                text: "Precisa do email",
+                type: "error",
+            });
             return
         }
         if(!formdata.value.password) {
-            alert('Precisa da senha')
+            notify({
+                text: "Precisa da senha",
+                type: "error",
+            });
             return
+        } else {
+            if(formdata.value.password.length < 6) {
+                notify({
+                    text: "A senha precisa ter no mínimo 6 caracteres",
+                    type: "error",
+                });
+                return
+            }
         }
         try {
             const auth: any = getAuth()
@@ -64,7 +80,10 @@
                 // 3. DESLOGA O USUÁRIO IMEDIATAMENTE!
                 await signOut(auth); // <--- A linha mágica ✨
                 
-                alert('usuário criado com sucesso. Por favor, faça o login.'); // Mensagem mais clara
+                notify({
+                    text: "Usuário criado com sucesso. Por favor, faça o login.",
+                    type: "success",
+                });
                 
                 // 4. Limpa o formulário
                 formdata.value = {
@@ -78,7 +97,10 @@
             }
         } catch(error) {
             console.log(error)
-            alert('Erro ao criar usuário. Tente novamente.'); // Boa prática ter um feedback de erro
+            notify({
+                text: "Erro ao criar usuário. Tente novamente.",
+                type: "error",
+            });
         }
     }
     const goRouter = () => {

@@ -19,13 +19,14 @@
     const purchase = ref<any>({})
     const loading = ref<boolean>(true)
     const totalResult = ref<number>(0)
-    
+    const { notify } = useNotification();
     const itensDeleted = ref<any[]>([])
+    const priceFinalOfPurchase = ref<any>(null)
     
     // Listener 1: Para a coleção de Itens
-    let unsubscribe: Function | null = null 
+    let unsubscribe = ref<any>(null)
     // Listener 2 (Novo): Para o documento de Compra
-    let unsubscribePurchase: Function | null = null 
+    let unsubscribePurchase = ref<any>(null)
 
     // O formdata agora é um array de objetos (contém todos os itens de todos os usuários)
     const formdata = ref<any[]>([
@@ -80,6 +81,13 @@
       formdata.value[index].price = value;
     }
 
+    // Função para tratar o valor do preço (substituir vírgula por ponto)
+    const formatPriceFinal = (event: any) => {
+      let value = event.target.value;
+      value = value.replace(',', '.');
+      priceFinalOfPurchase.value = value;
+    }
+
     const parseNumber = (value: any) => {
         if (value === null || value === undefined || value === "") return 0;
         // remove tudo que não seja dígito, ponto ou vírgula
@@ -122,8 +130,8 @@
     const getPurchase = () => {
         try {
             // Limpa o listener anterior, se houver
-            if (unsubscribePurchase) {
-                unsubscribePurchase(); 
+            if (unsubscribePurchase.value) {
+                unsubscribePurchase.value(); 
             }
 
             const purchaseRef = doc(
@@ -135,7 +143,7 @@
             )
 
             // Configura o listener em tempo real para o documento de compra
-            unsubscribePurchase = onSnapshot(purchaseRef, (purchaseSnap) => {
+            unsubscribePurchase.value.value = onSnapshot(purchaseRef, (purchaseSnap) => {
                 if (purchaseSnap.exists()) {
                     const purchaseDoc = {
                         id: purchaseSnap.id,
@@ -176,8 +184,8 @@
 
     // Usando onSnapshot para real-time nos itens
     const getItens = () => {
-        if (unsubscribe) {
-            unsubscribe(); // Limpa o listener antigo de Itens
+        if (unsubscribe.value) {
+            unsubscribe.value(); // Limpa o listener antigo de Itens
         }
         
         const q = query(
@@ -186,7 +194,7 @@
         )
 
         // Escutando em tempo real
-        unsubscribe = onSnapshot(q, (querySnapshot) => {
+        unsubscribe.value = onSnapshot(q, (querySnapshot) => {
             const items = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -257,11 +265,17 @@
 
             await Promise.all(promises);
             
-            // alert("Itens deletados com sucesso!"); // Substituir por feedback visual melhor
+            /*notify({
+                text: 'Itens deletados com sucesso!',
+                type: 'success'
+            })*/
             itensDeleted.value = []; // Limpa o array de deletados
         } catch (error) {
             console.error("Erro ao deletar itens:", error);
-            // alert("Erro ao deletar itens.");
+            /*notify({
+                text: 'Erro ao deletar itens.',
+                type: 'error'
+            })*/
         }
     }
 
@@ -273,7 +287,7 @@
                 purchase.value.purchase_planned_id, 
                 purchase.value.purchase_final_id, 
                 purchase.value.purchase_geral_id,
-                authentication.user.id // Passa o ID do usuário que está iniciando
+                authentication.user.id, // Passa o ID do usuário que está iniciando
             ).
                 then(() => {
                     // Após iniciar, o listener de purchase (getPurchase) já vai atualizar
@@ -295,10 +309,14 @@
                 purchase.value.purchase_planned_id,
                 Number(totalAmount.value) || 0,
                 parseFloat(String(totalPrice.value).replace(",", ".")) || 0,
-                purchase.value.purchase_geral_id
+                purchase.value.purchase_geral_id,
+                priceFinalOfPurchase.value
             ).
                 then(() => {
-                    alert("Compra finalizada com sucesso!");
+                    notify({
+                        text: 'Compra finalizada com sucesso!',
+                        type: 'success'
+                    })
                     router.push(`/conta/compras/${purchase.value.id}/exibir`)
                 })
         } catch(error) {
@@ -314,7 +332,10 @@
         const validItemsToSave = myItemsToSave.filter(item => item.name?.trim());
 
         if (!validItemsToSave.length) {
-            alert("Adicione pelo menos um item com nome válido.");
+            notify({
+                text: 'Adicione pelo menos um item com nome válido.',
+                type: 'success'
+            })
             return;
         }
 
@@ -340,10 +361,19 @@
 
             await Promise.all(promises);
             
-            alert("Itens salvos com sucesso!"); // Substituir por feedback
+            notify({
+                text: 'Itens salvos com sucesso!',
+                type: 'success'
+            })
+
+            formdata.value = []
+            getItens()
         } catch (error) {
             console.error("Erro ao finalizar/salvar a compra:", error);
-            // alert("Erro ao finalizar/salvar a compra.");
+            /*notify({
+                text: 'Erro ao finalizar/salvar a compra.',
+                type: 'error'
+            })*/
         }
     }
 
@@ -354,11 +384,11 @@
     
     // Antes de desmontar, remove TODOS os listeners em tempo real
     onBeforeUnmount(() => {
-        if (unsubscribe) { // Listener de Itens
-            unsubscribe();
+        if (unsubscribe.value) { // Listener de Itens
+            unsubscribe.value();
         }
-        if (unsubscribePurchase) { // Listener de Compra
-            unsubscribePurchase();
+        if (unsubscribePurchase.value) { // Listener de Compra
+            unsubscribePurchase.value();
         }
     })
 
@@ -570,17 +600,41 @@
                                 <!-- Delete Button -->
                                 <div 
                                     v-if="formdata.length > 0 && isMyItem(item) && !purchase.is_closed" 
-                                    class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                    class="absolute top-2 right-2 transition-opacity duration-200"
                                 >
                                     <button 
                                         @click.prevent="removeItem(index, item)" 
-                                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                                        class="cursor-pointer bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                             <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1v1zM4.5 4h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM11 2H5v1h6V2z"/>
                                         </svg>
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex mt-4">
+                            <div class="flex flex-col">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Preço final (que você pagou no caixa)
+                                </label>
+                                <div :class="[
+                                    'relative rounded-lg border transition-all duration-200',
+                                ]">
+                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                                        R$
+                                    </span>
+                                    <input
+                                        v-model="priceFinalOfPurchase" 
+                                        type="text" 
+                                        placeholder="0,00"
+                                        @input="formatPriceFinal($event)"
+                                        :class="[
+                                            'w-full pl-10 pr-3 py-2 bg-transparent focus:outline-none rounded-lg',
+                                        ]"
+                                    >
                                 </div>
                             </div>
                         </div>

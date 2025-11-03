@@ -14,6 +14,7 @@
     })
     const { firestore } = useFirebase()
     const router = useRouter()
+    const { notify } = useNotification();
     const isCreateGroupModal = ref<boolean>(false)
     const isGroupModal = ref<boolean>(false)
     const totalResult = ref<any>(0)
@@ -125,6 +126,11 @@
 
     onMounted(() => {
         getGroups()
+        /*notify({
+            title: "Sucesso!",
+            text: "Operação concluída com êxito.",
+            type: "success", // 'success', 'error', 'warn', 'info' ou customizado
+        });*/
     })
 
     onBeforeMount(() => {

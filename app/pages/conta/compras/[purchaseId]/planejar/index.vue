@@ -13,7 +13,7 @@
     definePageMeta({
         layout: 'dashboard'
     })
-
+    const { notify } = useNotification();
     const authentication: any = useAuthentication();
     const { firestore } = useFirebase();
     const router = useRouter()
@@ -276,16 +276,25 @@
             // espera todas as criações terminarem
             await Promise.all(promises);
 
-            alert("Itens deletados com sucesso!");
+            notify({
+                text: 'Itens deletados com sucesso!',
+                type: 'success'
+            })
         } catch (error) {
             console.error("Erro ao deletar itens:", error);
-            alert("Erro ao deletar itens.");
+            notify({
+                text: 'Erro ao deletar itens.',
+                type: 'error'
+            })
         }
     }
 
     const send = async () => {
         if (!formdata.value.length) {
-            alert("Adicione pelo menos um item");
+            notify({
+                text: 'Adicione pelo menos um item',
+                type: 'error'
+            })
             return;
         }
 
@@ -324,10 +333,16 @@
                 console.log(error)
             }
 
-            alert("Compra planejada com sucesso!");
+            notify({
+                text: 'Compra planejada com sucesso!',
+                type: 'success'
+            })
         } catch (error) {
             console.error("Erro ao salvar itens:", error);
-            alert("Erro ao salvar itens.");
+            notify({
+                text: 'Erro ao salvar itens.',
+                type: 'error'
+            })
         }
     };
 
@@ -607,10 +622,10 @@
                                 
                                 <!-- Delete Button -->
                                 <div v-if="!purchase.is_execute && !purchase.is_in_progress" 
-                                     class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                     class="absolute top-2 right-2 transition-opacity duration-200">
                                     <button 
                                         @click.prevent="removeItem(index, item)" 
-                                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                                        class="cursor-pointer bg-red-500 hover:bg-red-600 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>

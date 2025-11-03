@@ -39,6 +39,7 @@ export default defineComponent({
     const type = ref(props.type);
     const participants = ref(props.participants)
     const router = useRouter();
+    const { notify } = useNotification();
     const formdata = ref<any>({
       name: ''
     })
@@ -174,7 +175,10 @@ export default defineComponent({
         closeModal()
         emit('added')
       } else {
-        alert('O participante já está no grupo')
+        notify({
+          text: 'O participante já está no grupo',
+          type: 'error'
+        })
       }
     }
 
