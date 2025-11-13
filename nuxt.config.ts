@@ -5,32 +5,55 @@ export default defineNuxtConfig({
   ssr: true,
   modules: ['@nuxt/content', '@nuxt/image', '@nuxt/ui', 'nuxt3-notifications', '@pinia/nuxt'],
   css: ['~/assets/css/main.css'],
-  //pages: true,
-  //components: true,
-  //srcDir: 'src/',
   app: {
     head: {
-      title: 'Gerenciador',
+      title: 'Gerenciador de Compras',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: '',
+          content: 'Gerencie compras em grupo de forma inteligente e colaborativa',
         },
+        { name: 'theme-color', content: '#6366F1' }
       ],
       link: [
+        // Favicon SVG (primário)
         {
-          key: 'favicon',
+          rel: 'icon',
+          type: 'image/svg+xml',
+          href: '/favicon.svg'
+        },
+        // Favicon PNG (fallback)
+        {
           rel: 'icon',
           type: 'image/png',
-          href: '/favicon.png',
+          href: '/favicon.png'
+        },
+        // Apple Touch Icon
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: '/apple-touch-icon.png'
+        },
+        // Android Icons
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '192x192',
+          href: '/android-chrome-192x192.png'
         },
         {
-          key: 'mobileicon',
-          rel: 'apple-touch-icon',
+          rel: 'icon',
+          type: 'image/png',
           sizes: '512x512',
-          href: '/mobileicon.png',
+          href: '/android-chrome-512x512.png'
         },
+        // Web App Manifest
+        {
+          rel: 'manifest',
+          href: '/site.webmanifest'
+        },
+        // Fonts
         {
           rel: 'preconnect',
           href: 'https://fonts.googleapis.com',

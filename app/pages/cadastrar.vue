@@ -8,7 +8,6 @@
     } from 'firebase/firestore';
     const { firestore } = useFirebase();
     const router = useRouter();
-    const isLoginModal = ref<boolean>(false);
     const formdata = ref<any>({
         email: null,
         password: null,
@@ -16,6 +15,8 @@
     })
     const { notify } = useNotification();
     const isShowPassword = ref<boolean>(false)
+    const isLoading = ref(false)
+    
     const createUser = async () => {
         if(!formdata.value.name) {
             notify({
@@ -46,6 +47,9 @@
                 return
             }
         }
+        
+        isLoading.value = true
+        
         try {
             const auth: any = getAuth()
             let dateTimestamp = Timestamp.fromDate(new Date())
@@ -101,48 +105,121 @@
                 text: "Erro ao criar usuário. Tente novamente.",
                 type: "error",
             });
+        } finally {
+            isLoading.value = false
         }
     }
     const goRouter = () => {
         router.push(`/`)
     }
 </script>
+
 <template>
-    <main class="container">
-        <div class="grid grid-cols">
-            <div class="col-span-1">
-                <h1>Efetuar o login</h1>
+    <main class="container mx-auto px-4">
+        <div class="grid grid-cols-1 max-w-md mx-auto">
+            <!-- Header -->
+            <div class="col-span-1 text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Criar Conta</h1>
+                <p class="text-gray-600">Preencha seus dados para se cadastrar</p>
             </div>
-            <div class="col-span-1 mt-4">
-                <form action="" class="grid grid-cols">
-                    <div class="col-span-1">
-                        <div class="flex flex-col relative mt-1">
-                            <label v-if="formdata.name" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">Nome:</label>
-                            <input v-model="formdata.name" type="text" name="" id="" placeholder="Nome" class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-                        </div>
-                        <div class="flex flex-col relative mt-3">
-                            <label v-if="formdata.email" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">E-mail:</label>
-                            <input v-model="formdata.email" type="email" name="" id="" placeholder="E-mail" class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-                        </div>
-                        <div class="flex flex-col relative mt-3">
-                            <label v-if="formdata.password" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">Senha:</label>
+
+            <!-- Formulário -->
+            <div class="col-span-1">
+                <form class="space-y-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <!-- Campo Nome -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Nome Completo
+                        </label>
                         <div class="relative">
-                            <input v-model="formdata.password" :type="isShowPassword ? 'text' : 'password'" name="" id="" placeholder="Senha" class="w-full mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-                            <button @click="isShowPassword = !isShowPassword" type="button" class="cursor-pointer absolute position-center-y right-[5px] p-0 "><Icon :name="isShowPassword ? 'material-symbols:visibility-lock-rounded' : 'material-symbols:visibility-rounded'" class="align-middle text-xl" /></button>
-                        </div>
+                            <input 
+                                v-model="formdata.name"
+                                type="text" 
+                                placeholder="Seu nome completo"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white pl-11"
+                            />
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <Icon name="mdi:account" class="text-xl" />
+                            </div>
                         </div>
                     </div>
-                    <div class="col-span-1 mt-4">
-                        <div class="flex items-center justify-end">
-                            <Button @click.prevent="createUser" label="Criar" color="bg-green-700" />
+
+                    <!-- Campo Email -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Endereço de Email
+                        </label>
+                        <div class="relative">
+                            <input 
+                                v-model="formdata.email"
+                                type="email" 
+                                placeholder="seu@email.com"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white pl-11"
+                            />
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <Icon name="mdi:email" class="text-xl" />
+                            </div>
                         </div>
-                        <div class="flex justify-center mt-2">
-                            <Button @click.prevent="goRouter" label="Login" :isFlat="false" />
+                    </div>
+
+                    <!-- Campo Senha -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Senha
+                        </label>
+                        <div class="relative">
+                            <input 
+                                v-model="formdata.password"
+                                :type="isShowPassword ? 'text' : 'password'"
+                                placeholder="Sua senha"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white pl-11 pr-11"
+                            />
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <Icon name="mdi:lock" class="text-xl" />
+                            </div>
+                            <button 
+                                @click.prevent="isShowPassword = !isShowPassword" 
+                                type="button" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <Icon :name="isShowPassword ? 'mdi:eye-off' : 'mdi:eye'" class="text-xl" />
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            A senha deve ter pelo menos 6 caracteres
+                        </p>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="space-y-4">
+                        <button
+                            @click.prevent="createUser"
+                            :disabled="isLoading"
+                            :class="[
+                                'w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2',
+                                isLoading 
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                                    : 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg'
+                            ]"
+                        >
+                            <Icon v-if="isLoading" name="mdi:loading" class="animate-spin text-lg" />
+                            <Icon v-else name="mdi:account-plus" class="text-lg" />
+                            <span>{{ isLoading ? 'Criando conta...' : 'Criar Conta' }}</span>
+                        </button>
+
+                        <!-- Login -->
+                        <div class="pt-4 border-t border-gray-200">
+                            <button
+                                @click.prevent="goRouter"
+                                class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
+                            >
+                                <Icon name="mdi:login" class="text-lg" />
+                                <span>Fazer Login</span>
+                            </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
     </main>
-    <LoginModal v-model="isLoginModal" />
 </template>

@@ -721,6 +721,34 @@ export const finishedPurchase = async (
     );
 
     await updateDoc(docRef, {
-      last_login: now
+      last_login: now,
+      updated_at: now
+    });
+  }
+
+  export const updateUser = async (profileId: string, userId: string, userName: string) => {
+    const { firestore } = useFirebase();
+    const now = new Date()
+
+    const docProfileRef = doc(
+      firestore,
+      "Profiles",
+      profileId
+    );
+
+    const docUserRef = doc(
+      firestore,
+      "Users",
+      userId
+    );
+
+    await updateDoc(docProfileRef, {
+      name: userName,
+      updated_at: now
+    });
+
+    await updateDoc(docUserRef, {
+      name: userName,
+      updated_at: now
     });
   }
