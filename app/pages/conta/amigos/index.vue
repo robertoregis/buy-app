@@ -16,7 +16,6 @@
   const router = useRouter();
   const { firestore } = useFirebase();
   const authentication: any = useAuthentication();
-  const isCreateNewModal = ref<boolean>(false)
   const totalResult = ref<any>(0)
   const friends = ref<any[]>([])
   const loading = ref<boolean>(true)
@@ -96,8 +95,6 @@
 
             // 4. Espera todas as Promises terminarem para ter a lista final de participantes
             friends.value = await Promise.all(userDetailsPromises);
-
-            console.log(friends.value)
         } catch (error) {
             console.error(error)
         } finally {
@@ -188,12 +185,15 @@
       <div class="flex justify-center space-x-4">
         <NuxtLink 
           to="/conta/amigos/pedidos" 
-          class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+          class="relative bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
           </svg>
           <span>Ver Pedidos</span>
+          <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-7px] right-[-7px] p-2 w-[20px] h-[20px] rounded-full bg-green-500 flex justify-center items-center">
+            <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>
+          </div>
         </NuxtLink>
         
         <NuxtLink 
@@ -290,9 +290,12 @@
             </NuxtLink>
             <NuxtLink 
               to="/conta/amigos/pedidos" 
-              class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+              class="relative bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
             >
-              Ver Pedidos
+              <span>Ver pedidos</span>
+              <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-7px] right-[-7px] p-2 w-[20px] h-[20px] rounded-full bg-green-500 flex justify-center items-center">
+                <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>
+              </div>
             </NuxtLink>
           </div>
         </div>

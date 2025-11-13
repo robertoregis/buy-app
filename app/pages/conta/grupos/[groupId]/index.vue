@@ -12,12 +12,11 @@
     })
     const { firestore } = useFirebase();
     const authentication: any = useAuthentication();
-    const isCreateNewModal = ref<boolean>(false);
+    const isCreatePurchaseModal = ref<boolean>(false);
     const isAddParticipant = ref<boolean>(false);
     const router = useRouter();
     const route: any = useRoute();
     const purchases = ref<any[]>([])
-    const members = ref<any[]>([1, 2])
     const participants = ref<any[]>([])
     const group = ref<any>({})
     const loading = ref<boolean>(true)
@@ -49,7 +48,6 @@
         try {
             loading.value = true
 
-            // Query base para contagem
             const countQuery = query(
             collection(firestore, "Groups", authentication.group.id, "Purchases"),
                 where("is_active", "==", true),
@@ -57,7 +55,6 @@
             const countSnap = await getCountFromServer(countQuery)
             totalResult.value = countSnap.data().count
 
-            // Query para buscar os dados
             const q = query(
             collection(firestore, "Groups", authentication.group.id, "Purchases"),
                 where("is_active", "==", true),
@@ -81,7 +78,6 @@
         try {
             loading.value = true
 
-            // 1. Query base para contagem
             const countQuery = query(
                 collection(firestore, "Groups", authentication.group.id, "Participants"),
                 where("is_active", "==", true),
@@ -89,7 +85,6 @@
             const countSnap = await getCountFromServer(countQuery)
             totalResult.value = countSnap.data().count
 
-            // 2. Query para buscar os dados dos Participantes
             const q = query(
                 collection(firestore, "Groups", authentication.group.id, "Participants"),
                 where("is_active", "==", true),
@@ -97,18 +92,15 @@
                 limit(3)
             )
 
-            const querySnapshot = await getDocs(q)
-            
-            // Mapeia os documentos dos Participantes para um array
+            const querySnapshot = await getDocs(q)            
             const participantDocs = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }))
 
-            // 3. Cria um array de Promises para buscar o perfil de cada usuário (coleção 'Users')
+            // Cria um array de Promises para buscar o perfil de cada usuário (coleção 'Users')
             const userDetailsPromises = participantDocs.map(async (participant: any) => {
                 
-                // Referência ao documento do Usuário, usando o user_id do Participante
                 const userDocRef = doc(firestore, "Users", participant.user_id);
                 const userSnap = await getDoc(userDocRef);
 
@@ -118,14 +110,14 @@
                     // Retorna um objeto mesclado. Os campos do 'Users' sobrescrevem os do 'Participants',
                     // garantindo que 'name' e 'email' estejam sempre atuais.
                     return {
-                        id: participant.id,         // ID do documento em Participants
-                        user_id: participant.user_id, // ID do usuário
-                        ...participant,             // Mantém todos os campos originais do Participants
+                        id: participant.id,
+                        user_id: participant.user_id,
+                        ...participant,
                         
                         // Campos atualizados da coleção Users
                         name: userData.name,
                         email: userData.email,
-                        image_url: userData.image_url || null // '|| null' é uma segurança caso a imagem não exista
+                        image_url: userData.image_url || null
                     };
                 } else {
                     // Caso o documento em Users tenha sido deletado ou não exista
@@ -140,7 +132,7 @@
                 }
             });
 
-            // 4. Espera todas as Promises terminarem para ter a lista final de participantes
+            // Espera todas as Promises terminarem para ter a lista final de participantes
             participants.value = await Promise.all(userDetailsPromises);
 
         } catch (error) {
@@ -150,10 +142,10 @@
         }
     }
 
-    const convertePrice = (planned: number, final: number) => {
+    /*const convertePrice = (planned: number, final: number) => {
         const price = Number(planned) - Number(final);
         return `R$ ${price.toFixed(2).replace(".", ",")}`
-    }
+    }*/
 
     // Calcular economia
     const calculateSavings = (purchase: any) => {
@@ -263,11 +255,11 @@
                                     <div class="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
                                         <div class="flex items-center space-x-2">
                                             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm font-semibold">
-                                                {{ purchase.final_price_formatted || 'R$ 0,00' }}
+                                                {{ purchase.price_final_formatted || 'R$ 0,00' }}
                                             </span>
                                             <span class="text-sm text-gray-600">Valor Final</span>
                                         </div>
-                                        
+
                                         <div 
                                             v-if="calculateSavings(purchase).amount !== 0"
                                             class="flex items-center space-x-2"
@@ -283,7 +275,7 @@
                                                 {{ calculateSavings(purchase).formatted }}
                                             </span>
                                             <span class="text-sm text-gray-600">
-                                                Valor planejado
+                                                Sua economia
                                             </span>
                                         </div>
                                     </div>
@@ -304,7 +296,7 @@
 
                         <!-- Create Purchase Button -->
                         <button 
-                            @click="isCreateNewModal = true"
+                            @click="isCreatePurchaseModal = true"
                             class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,7 +382,7 @@
     </main>
 
     <!-- Modals (Keep exactly as they are) -->
-    <CreateNewModal v-model="isCreateNewModal" />
+    <CreatePurchaseModal v-model="isCreatePurchaseModal" />
     <AddParticipant v-model="isAddParticipant" :participants="participants" type="group" @added="getGroup" />
     <Participant v-model="isShowParticipant" :participant="participantSelected" />
 </template>

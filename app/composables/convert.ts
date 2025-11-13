@@ -1,4 +1,6 @@
-import { Timestamp } from "firebase/firestore"
+import { Timestamp } from "firebase/firestore";
+
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export function convertDate(dateForConvert: any) {
     const date = dateForConvert
@@ -44,16 +46,24 @@ export function convertDate(dateForConvert: any) {
 }
 
 export const convertDateFirestore = (date: any) => {
-    const newTimestamp = new Timestamp(date.seconds, date.nanoseconds)
-    const newDate = newTimestamp.toDate()
-    let result
-    if(newDate.getDate()) {
+    if (!date || typeof date.seconds === 'undefined' || typeof date.nanoseconds === 'undefined') {
+        return '-';
+    }
+
+    try {
+        const newTimestamp = new Timestamp(date.seconds, date.nanoseconds)
+        const newDate = newTimestamp.toDate()
+        let result
+
         let myDate = convertDate(newDate)
         result = `${myDate.day}/${myDate.month}/${myDate.year} - ${myDate.hours}:${myDate.minutes}:${myDate.seconds}`
-    } else {
-        result = '-'
+        
+        return result;
+        
+    } catch (e) {
+        console.error("Erro na conversão de data Firestore:", e);
+        return '-';
     }
-    return result
 }
 
 export const convertDateFirestoreFriends = (date: any) => {
@@ -67,4 +77,18 @@ export const convertDateFirestoreFriends = (date: any) => {
         result = '-'
     }
     return result
+}
+
+export const isLoginOlderThanOneDay = (lastLoginDate: Date) => {
+  // Tratamento para datas nulas ou inválidas (assume que o login é antigo se não existir).
+  if (!(lastLoginDate instanceof Date) || isNaN(lastLoginDate.getTime())) {
+    console.warn("A data de login é inválida ou nula. Assumindo que o login é antigo.");
+    return true; 
+  }
+
+  // Calcula a diferença em milissegundos entre o AGORA e o ÚLTIMO LOGIN.
+  const differenceMs = Date.now() - lastLoginDate.getTime();
+  
+  // Retorna TRUE se a diferença for maior que 1 dia (86.400.000 ms).
+  return differenceMs > ONE_DAY_IN_MS;
 }

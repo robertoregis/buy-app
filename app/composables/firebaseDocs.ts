@@ -62,6 +62,13 @@
       updated_at: now,
     })
 
+    await createWarning({
+      title: "Grupo criado",
+      user_id: data.owner_id,
+      description: "Você acabou de criar um novo grupo",
+      type: "group_add"
+    })
+
     return groupRef.id
   }
 
@@ -98,13 +105,11 @@
         purchase_planned_id: null,
         purchase_geral_id: null,
         is_closed: false,
-        final_price: 0,
-        final_price_formatted: "R$ 0,00",
-        final_amount: 0,
         price_planned: 0,
         price_final: 0,
         price_planned_formatted: "R$ 0,00",
         price_final_formatted: "R$ 0,00",
+        price_real_final: "R$ 0,00",
         amount_planned: 0,
         amount_final: 0,
         is_in_progress: false,
@@ -138,9 +143,9 @@
         is_closed: false,
         is_active: true,
         is_execute: false,
-        final_price: 0,
-        final_price_formatted: "R$ 0,00",
-        final_amount: 0,
+        price_final: 0,
+        price_final_formatted: "R$ 0,00",
+        amount_final: 0,
         created_at: now,
         updated_at: now
       })
@@ -155,9 +160,9 @@
         is_closed: false,
         is_active: true,
         is_execute: false,
-        final_price: 0,
-        final_price_formatted: "R$ 0,00",
-        final_amount: 0,
+        price_final: 0,
+        price_final_formatted: "R$ 0,00",
+        amount_final: 0,
         created_at: now,
         updated_at: now
       })
@@ -189,6 +194,13 @@
         purchase_geral_id: purchaseGeral.id
       })
     }
+
+    await createWarning({
+      title: "Compra criada",
+      user_id: userId,
+      description: "Você acabou de criar uma nova compra",
+      type: "purchase_add"
+    })
 
     return purchaseRef.id
   }
@@ -280,7 +292,9 @@ export const initExecutePurchase = async (
   plannedPurchaseId: string,
   finalPurchaseId: string,
   purchaseGeralId: string,
-  initiatorUserId: string // Adicionei o ID do iniciador para setar o created_by inicial
+  initiatorUserId: string, // Adicionei o ID do iniciador para setar o created_by inicial
+  members: any[],
+  namePurchase: string
 ) => {
   const { firestore } = useFirebase()
   const now = new Date()
@@ -295,7 +309,7 @@ export const initExecutePurchase = async (
   const finalRef = doc(modelsCollection, finalPurchaseId)
   const purchaseGeralRef = doc(purchaseGeralCollection, purchaseGeralId)
 
-  // 2️⃣ Atualiza ambas para marcar como executadas
+  // 2️⃣ Atualiza ambas para marcar como iniciadas a executar
   await Promise.all([
     updateDoc(purchaseRef, { is_in_progress: true, updated_at: now, status: "in_execute", status_formatted: "Em execução", init_execute_date: now }),
     updateDoc(plannedRef, { is_in_progress: true, updated_at: now }),
@@ -328,6 +342,16 @@ export const initExecutePurchase = async (
 
   await Promise.all(promises)
 
+  members.forEach(async (id) => {
+    let message = id === initiatorUserId ? `Você acabou de iniciar a compra: ${namePurchase}` : `A compra ${namePurchase} foi iniciada`
+    await createWarning({
+      title: "Compra iniciada",
+      user_id: id,
+      description: message,
+      type: "purchase_init"
+    })
+  })
+
   console.log("✅ Compra executada com sucesso! Itens copiados para a versão final.")
 }
 
@@ -357,14 +381,14 @@ export const finishedPurchase = async (
   // 2️⃣ Atualiza ambas para marcar como finalizadas
   await Promise.all([
     updateDoc(plannedRef, { is_execute: true, is_closed: true, updated_at: now }),
-    updateDoc(finalRef, { is_execute: true, is_closed: true, updated_at: now, final_price: price, final_amount: amount, final_price_formatted: priceFormatted }),
+    updateDoc(finalRef, { is_execute: true, is_closed: true, updated_at: now, price_final: price, amount_final: amount, price_final_formatted: priceFormatted }),
     updateDoc(purchaseRef, {
       is_execute: true,
       is_closed: true,
       updated_at: now,
-      final_price: price,
-      final_amount: amount,
-      final_price_formatted: priceFormatted,
+      price_final: price,
+      amount_final: amount,
+      price_final_formatted: priceFormatted,
       status: "final",
       status_formatted: "Executada",
       price_real_final: priceFinalOfPurchase,
@@ -382,7 +406,9 @@ export const finishedPurchase = async (
     plannedPurchaseId: string,
     amount: number,
     price: number,
-    purchaseGeralId: string
+    purchaseGeralId: string,
+    members: any[],
+    namePurchase: string
   ) => {
     const { firestore } = useFirebase()
     const now = new Date()
@@ -400,11 +426,11 @@ export const finishedPurchase = async (
     const priceFormatted = `R$ ${price.toFixed(2).replace(".", ",")}`
     // 2️⃣ Atualiza ambas para marcar como finalizadas
     await Promise.all([
-      updateDoc(plannedRef, { final_price: price, final_amount: amount, final_price_formatted: priceFormatted, updated_at: now }),
+      updateDoc(plannedRef, { price_final: price, amount_final: amount, price_final_formatted: priceFormatted, updated_at: now }),
       updateDoc(purchaseRef, { 
-        final_price: price, 
-        final_amount: amount, 
-        final_price_formatted: priceFormatted,
+        price_final: price, 
+        amount_final: amount, 
+        price_final_formatted: priceFormatted,
         price_planned: price,
         amount_planned: amount,
         price_planned_formatted: priceFormatted,
@@ -420,10 +446,18 @@ export const finishedPurchase = async (
       }),
     ])
 
+    members.forEach(async (id) => {
+      await createWarning({
+        title: "Compra planejada",
+        user_id: id,
+        description: `A compra ${namePurchase} foi planejada`,
+        type: "purchase_planned"
+      })
+    })
+
     console.log("✅ Compra planejada com sucesso!")
   }
 
-  // Criar um participante dentro de uma empresa
   export const createParticipantInPurchase = async (
     groupId: string,
     purchaseId: string,
@@ -483,7 +517,7 @@ export const finishedPurchase = async (
     const docRef = doc(
         firestore,
         "Groups",
-        groupId // Use o ID do documento aqui
+        groupId
     );
 
     await updateDoc(docRef, {
@@ -495,42 +529,48 @@ export const finishedPurchase = async (
   }
 
   export const createFriendRequest = async (
-      userFrom: {
-        id: string,
-        name: string,
-        email: string
-      },
-      userTo: {
-        id: string,
-        name: string,
-        email: string
-      }
+     userFrom: { id: string, name: string, email: string },
+     userTo: { id: string, name: string, email: string }
   ) => {
       const { firestore } = useFirebase();
       const now = new Date()
-
-      // 💡 PASSO 1: CALCULAR O ID DE PAR
+  
       const userPairId = generateUserPairId(userFrom.id, userTo.id);
-
-      // 💡 PASSO 2: CONSULTA CORRIGIDA (SEM MÚLTIPLOS array-contains)
-      const q = query(
-          collection(firestore, "Friendships"),
-          where("is_active", "==", true),
-          where('user_pair_id', '==', userPairId), // <-- Usando o novo campo
+  
+      const qPending = query(
+          collection(firestore, "FriendRequests"),
+          where("status", "==", "aberto"), // status: "aberto" (não "aceito" ou "recusado")
+          where('user_pair_id', '==', userPairId), // Usa o campo de índice
           limit(1)
       );
-
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
+  
+      const snapshotPending = await getDocs(qPending);
+  
+      if (!snapshotPending.empty) {
+          return {
+              status: 301,
+              message: 'Já existe um pedido de amizade pendente entre estes usuários.',
+              id: snapshotPending.docs[0]?.id
+          }
+      }
+  
+      const qFriendship = query(
+          collection(firestore, "Friendships"),
+          where("is_active", "==", true),
+          where('user_pair_id', '==', userPairId),
+          limit(1)
+      );
+  
+      const querySnapshotFriendship = await getDocs(qFriendship);
+  
+      if (!querySnapshotFriendship.empty) {
           return {
               status: 300,
               message: 'Você já tem uma amizade ativa com este usuário.',
-              id: querySnapshot.docs[0]?.id // Opcional: retornar o ID da amizade
+              id: querySnapshotFriendship.docs[0]?.id
           }
       }
-
-      // PASSO 3: CRIAR O PEDIDO DE AMIZADE
+  
       const friendRequestRef = await addDoc(
           collection(firestore, "FriendRequests"),
           {
@@ -543,9 +583,10 @@ export const finishedPurchase = async (
               is_active: true,
               created_at: now,
               updated_at: now,
+              user_pair_id: userPairId, // ⬅️ NOVO CAMPO SALVO AQUI
           }
       )
-
+  
       return {
           status: 200,
           message: 'Pedido criado com sucesso',
@@ -561,13 +602,14 @@ export const finishedPurchase = async (
     const now = new Date()
 
     const docRef = doc(
-        firestore,
-        "FriendRequests",
-        FriendRequestId // Use o ID do documento aqui
+      firestore,
+      "FriendRequests",
+      FriendRequestId // Use o ID do documento aqui
     );
 
     await updateDoc(docRef, {
         is_refused: isRefused,
+        status: isRefused ? 'recusado' : 'aceito',
         is_closed: true,
         is_active: false,
         updated_at: now
@@ -589,14 +631,8 @@ export const finishedPurchase = async (
   ) => {
       const { firestore } = useFirebase();
       const now = new Date()
-
-      // Gerar o ID do par para salvar
       const userPairId = generateUserPairId(userFrom.id, userTo.id);
-
-      // 1. Atualizar o pedido para Fechado/Ativo
       await updateFriendRequest(false, friendRequestId)
-
-      // 2. Criar o documento de amizade
       const friendRequestRef = await addDoc(
           collection(firestore, "Friendships"),
           {
@@ -649,4 +685,42 @@ export const finishedPurchase = async (
     };
 
     await updateDoc(docRef, updateData);
+  }
+
+   // Criar um grupo
+  export const createWarning = async (data: {
+    title: string,
+    user_id: string,
+    description: string,
+    type: string
+  }) => {
+    const { firestore } = useFirebase();
+    const now = new Date()
+
+    const groupRef = await addDoc(collection(firestore, "Warnings"), {
+      title: data.title,
+      description: data.description ?? null,
+      user_id: data.user_id,
+      type: data.type,
+      is_closed: false,
+      created_at: now,
+      updated_at: now,
+    })
+
+    return groupRef.id
+  }
+
+  export const updateLogin = async (userId: string) => {
+    const { firestore } = useFirebase();
+    const now = new Date()
+
+    const docRef = doc(
+      firestore,
+      "Users",
+      userId
+    );
+
+    await updateDoc(docRef, {
+      last_login: now
+    });
   }

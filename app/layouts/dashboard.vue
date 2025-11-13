@@ -1,13 +1,21 @@
 <script setup lang="ts">
     import { useParams } from '../stores/params.js';
     import { useAuthentication } from '../stores/authentication.js';
+    import { collection, getDocs, query, where,
+        getCountFromServer, getDoc, doc, updateDoc, Timestamp, orderBy,
+        limit
+    } from 'firebase/firestore';
+    import { useFirebase } from '../composables/useFirebase';
     import { signOut, getAuth } from "firebase/auth";
 
     const isModal = ref<boolean>(false);
     const router = useRouter();
     const params = useParams();
-    const authentication = useAuthentication();
+    const { firestore } = useFirebase();
+    const authentication: any = useAuthentication();
     const { notify } = useNotification();
+    const totalResultWarnings = ref<number>(0);
+    const totalResultFriendRequests = ref<number>(0);
     
     // Estado para menu mobile
     const isMobileMenuOpen = ref<boolean>(false);
@@ -18,9 +26,36 @@
     }
 
     const goGroups = () => {
-        authentication.setGroup({});
+        if(Object.keys(authentication.group || {}).length) {
+            authentication.setGroup({});
+        }
         router.push('/conta/grupos');
         isMobileMenuOpen.value = false;
+    }
+
+    const countWarnings = async () => {
+        const date = new Date()
+        date.setDate(date.getDate() - 1)
+        let constraints = [
+            //where("is_closed", "==", false),
+            where("user_id", "==", authentication.user.id),
+            where("created_at", ">", date),
+        ];
+        let q = query(collection(firestore, "Warnings"), ...constraints);
+        const snapshot = await getCountFromServer(q);
+        totalResultWarnings.value = snapshot.data().count
+        authentication.setCountWarnings(snapshot.data().count)
+    }
+
+    const countFriendRequests = async () => {
+        let constraints = [
+            where("is_closed", "==", false),
+            where("user_to_id", "==", authentication.userId)
+        ];
+        let q = query(collection(firestore, "FriendRequests"), ...constraints);
+        const snapshot = await getCountFromServer(q);
+        totalResultFriendRequests.value = snapshot.data().count
+        authentication.setCountFriendRequests(snapshot.data().count)
     }
 
     // Fecha menu mobile ao redimensionar para desktop
@@ -45,6 +80,8 @@
     }
 
     onMounted(() => {
+        countFriendRequests();
+        countWarnings();
         window.addEventListener('resize', handleResize);
     })
 
@@ -66,39 +103,56 @@
                 </div>
                 <h1 class="text-lg font-bold hidden sm:block">Gerenciador de Compras</h1>
                 <h1 class="text-lg font-bold sm:hidden">GC</h1>
+                <button @click="navigation('/conta/avisos')" class="flex items-center justify-center relative cursor-pointer">
+                    <Icon name="mdi:bell-ring" class="text-2xl inline-block align-middle" />
+                    <div v-if="authentication.countWarnings > 0" class="absolute top-[-7px] right-[-7px] p-2 w-[17px] h-[17px] rounded-full bg-orange-500 flex justify-center items-center">
+                        <span class="font-bold inline-block align-middle">{{ authentication.countWarnings }}</span>
+                    </div>
+                </button>
             </div>
-
             <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-2">
+            <div class="hidden lg:flex items-center space-x-2">
                 <button 
                     @click="navigation('/conta/amigos')"
-                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                    class="cursor-pointer relative flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
                     <Icon name="mdi:account-group" class="text-lg" />
                     <span class="text-sm font-medium">Amigos</span>
+                    <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-2px] right-[-2px] p-2 w-[20px] h-[20px] rounded-full bg-green-500 flex justify-center items-center">
+                        <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>
+                    </div>
                 </button>
 
                 <button 
                     v-if="params.routeCurrent !== 'purchases' && Object.keys(authentication.group || {}).length"
                     @click="navigation('/conta/compras')"
-                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                    class="cursor-pointer flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
                     <Icon name="mdi:cart" class="text-lg" />
                     <span class="text-sm font-medium">Compras</span>
                 </button>
 
-                <button 
-                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
-                    @click="goGroups"
-                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                <button
+                    v-if="Object.keys(authentication.group || {}).length"
+                    @click="navigation(`/conta/grupos/${authentication.group.id}`)"
+                    class="cursor-pointer flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
                     <Icon name="mdi:account-group" class="text-lg" />
-                    <span class="text-sm font-medium">Grupos</span>
+                    <span class="text-sm font-medium">Grupo</span>
+                </button>
+
+                <button
+                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
+                    @click="goGroups"
+                    class="cursor-pointer flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                >
+                    <Icon name="mdi:account-group" class="text-lg" />
+                    <span class="text-sm font-medium">{{ Object.keys(authentication.group || {}).length ? 'Sair do grupo' : 'Grupos' }}</span>
                 </button>
 
                 <button 
-                    @click="navigation('/configuracao')"
-                    class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                    @click="navigation('/conta/configuracao')"
+                    class="cursor-pointer flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
                     <Icon name="mdi:cog" class="text-lg" />
                     <span class="text-sm font-medium">Configurações</span>
@@ -106,60 +160,76 @@
 
                 <button 
                     @click="logout()"
-                    class="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
+                    class="cursor-pointer flex items-center xl:space-x-2 bg-red-500 hover:bg-red-600 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
                 >
                     <Icon name="mdi:logout" class="text-lg" />
-                    <span class="text-sm font-medium">Sair</span>
+                    <span class="hidden xl:inline text-sm font-medium">Sair</span>
                 </button>
             </div>
 
             <!-- Mobile Menu Button -->
             <button 
                 @click="isMobileMenuOpen = !isMobileMenuOpen"
-                class="md:hidden flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200"
+                class="relative lg:hidden flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200"
             >
                 <Icon 
                     :name="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" 
                     class="text-xl" 
                 />
+                <div v-if="authentication.getCountTotalMenu > 0" class="absolute top-[-4px] right-[-4px] p-2 w-[16px] h-[16px] rounded-full bg-orange-500 flex justify-center items-center">
+                    <span class="text-sm font-bold inline-block align-middle">{{ authentication.getCountTotalMenu }}</span>
+                </div>
             </button>
         </header>
 
         <!-- Mobile Menu -->
         <div 
             v-if="isMobileMenuOpen"
-            class="md:hidden fixed inset-x-0 top-16 bg-gray-800 shadow-lg z-40 animate-slideDown"
+            class="lg:hidden fixed inset-x-0 top-16 bg-gray-800 shadow-lg z-40 animate-slideDown"
         >
             <div class="px-4 py-3 space-y-2">
                 <button 
                     @click="navigation('/conta/amigos')"
-                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                    class="cursor-pointer relative w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:account-group" class="text-xl" />
                     <span class="font-medium">Amigos</span>
+                    <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-2px] right-[-2px] p-2 w-[20px] h-[20px] rounded-full bg-orange-500 flex justify-center items-center">
+                        <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>
+                    </div>
                 </button>
 
                 <button 
                     v-if="params.routeCurrent !== 'purchases' && Object.keys(authentication.group || {}).length"
                     @click="navigation('/conta/compras')"
-                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                    class="cursor-pointer w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:cart" class="text-xl" />
                     <span class="font-medium">Compras</span>
                 </button>
 
                 <button 
-                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
-                    @click="goGroups"
-                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                    v-if="Object.keys(authentication.group || {}).length"
+                    @click="navigation(`/conta/grupos/${authentication.group.id}`)"
+                    class="cursor-pointer w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:account-group" class="text-xl" />
-                    <span class="font-medium">Grupos</span>
+                    <span class="font-medium">Grupo</span>
                 </button>
 
                 <button 
-                    @click="navigation('/configuracao')"
-                    class="w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
+                    @click="goGroups"
+                    class="cursor-pointer w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                >
+                    <Icon name="mdi:account-group" class="text-xl" />
+                    <span class="font-medium">{{ Object.keys(authentication.group || {}).length ? 'Sair do grupo' : 'Grupos' }}</span>
+                </button>
+                
+
+                <button 
+                    @click="navigation('/conta/configuracao')"
+                    class="cursor-pointer w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:cog" class="text-xl" />
                     <span class="font-medium">Configurações</span>
@@ -167,7 +237,7 @@
 
                 <button 
                     @click="logout()"
-                    class="w-full flex items-center space-x-3 bg-red-500 hover:bg-red-600 px-4 py-3 rounded-lg transition-all duration-200 text-white"
+                    class="cursor-pointer w-full flex items-center space-x-3 bg-red-500 hover:bg-red-600 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
                     <Icon name="mdi:logout" class="text-xl" />
                     <span class="font-medium">Sair</span>
@@ -179,14 +249,15 @@
         <div 
             v-if="isMobileMenuOpen"
             @click="isMobileMenuOpen = false"
-            class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+            class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
         ></div>
 
         <!-- Conteúdo da Página -->
         <main class="flex-1 overflow-auto p-4 md:p-6 max-w-7xl mx-auto w-full">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)]">
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)]">
                 <slot />
             </div>
+            
         </main>
 
         <!-- Footer -->

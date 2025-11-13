@@ -6,27 +6,23 @@
   import { getAuth, onAuthStateChanged } from 'firebase/auth';
   import { useFirebase } from './composables/useFirebase';
   import { useUserData } from './composables/useUserData';
-  import {
-    signOut
-  } from 'firebase/auth';
 
   export default {
     setup() {
       const { getCurrentUser, getUserClaims, checkExpiration } = useFirebaseAuth()
       const { fetchProfile } = useProfile()
-      const { getUser } = useUserData();
       const { auth } = useFirebase();
-      const router = useRouter()
-      const route = useRoute()
-      const authentication = useAuthentication()
-      const loading = ref(true)
+      const router = useRouter();
+      const route = useRoute();
+      const authentication = useAuthentication();
+      const loading = ref(true);
 
       const initAuth = async () => {
         //await signOut(auth);
         onAuthStateChanged(auth, async (user) => {
           const group_id = localStorage.getItem('buy_group_id')
           if (!user) {
-            router.push('/')
+            router.push('/');
             loading.value = false
             return
           }
@@ -36,17 +32,17 @@
           if (!expired) {
             await fetchProfile(user.uid, group_id).then(async (response) => {
               if (route.path === '/') {
-                router.push('/conta/grupos')
+                router.push('/conta/grupos');
               }
+              loading.value = false
             })
             
           }
-          loading.value = false
         })
       }
 
       onMounted(() => {
-        initAuth()
+        initAuth();
       })
 
       return {

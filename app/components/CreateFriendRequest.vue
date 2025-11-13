@@ -54,7 +54,7 @@ export default defineComponent({
                 type: 'success'
               })
               router.push(`/conta/amigos/pedidos`)
-            } else if(response.status === 300) {
+            } else if(response.status === 300 || response.status === 301) {
               notify({
                 text: response.message,
                 type: 'error'

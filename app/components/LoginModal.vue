@@ -7,6 +7,7 @@
   } from 'firebase/firestore';
   import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
   import { useProfile } from '../composables/useProfile';
+  import { updateLogin } from '../composables/firebaseDocs';
 
   export default defineComponent({
     name: 'LoginModal',
@@ -84,11 +85,6 @@
           }
           let dateTimestamp = Timestamp.fromDate(new Date())
           const userRef = doc(firestore, "Users", data.id);
-          await updateDoc(userRef, {
-            'dashboard.total_interactions': increment(1),
-            last_login: dateTimestamp,
-            updated_at: dateTimestamp,
-          });
           router.push('/conta/grupos')
           setTimeout(() => {
               notify({

@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { collection, getDocs, query, where,
-        getCountFromServer, getDoc, doc, updateDoc, Timestamp, orderBy,
+        getCountFromServer, orderBy,
         limit,startAt, limitToLast, endAt
     } from 'firebase/firestore';
     import { useFirebase } from '../../../composables/useFirebase';
@@ -15,7 +15,7 @@
     const { firestore } = useFirebase();
     const router = useRouter();
     const authentication: any = useAuthentication();
-    const isCreateNewModal = ref<boolean>(false)
+    const isCreatePurchaseModal = ref<boolean>(false)
     const totalResult = ref<any>(0)
     const purchases = ref<any[]>([])
     const loading = ref<boolean>(true)
@@ -29,7 +29,6 @@
         try {
             loading.value = true
 
-            // Query base para contagem
             const countQuery = query(
             collection(firestore, "Groups", authentication.group.id, "Purchases"),
                 where("is_active", "==", true),
@@ -37,7 +36,6 @@
             const countSnap = await getCountFromServer(countQuery)
             totalResult.value = countSnap.data().count
 
-            // Query para buscar os dados
             const q = query(
             collection(firestore, "Groups", authentication.group.id, "Purchases"),
                 where("is_active", "==", true),
@@ -47,19 +45,17 @@
 
             const querySnapshot = await getDocs(q)
             purchases.value = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+                id: doc.id,
+                ...doc.data()
             }))
 
             if (purchases.value.length > 12) {
             nextPage.value = true
-            lastVisible.value = querySnapshot.docs[querySnapshot.docs.length - 1]
-            purchases.value.pop() // remove o 13º
+                lastVisible.value = querySnapshot.docs[querySnapshot.docs.length - 1]
+                purchases.value.pop()
             } else {
-            nextPage.value = false
+                nextPage.value = false
             }
-
-            console.log(purchases.value)
         } catch (error) {
             console.error(error)
         } finally {
@@ -142,7 +138,7 @@
     }
 
     // Formatar data
-    const formatDate = (timestamp: any) => {
+    /*const formatDate = (timestamp: any) => {
         if (!timestamp) return 'Data não disponível';
         try {
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -150,7 +146,7 @@
         } catch {
             return 'Data inválida';
         }
-    }
+    }*/
 
     onBeforeMount(() => {
         params.changeRouteCurrent('purchases')
@@ -179,7 +175,7 @@
             <!-- Create Button -->
             <div class="flex justify-center">
                 <button 
-                    @click="isCreateNewModal = true"
+                    @click="isCreatePurchaseModal = true"
                     class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,7 +237,7 @@
                                 <div class="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
                                     <div class="flex items-center space-x-2">
                                         <span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm font-semibold">
-                                            {{ purchase.final_price_formatted || 'R$ 0,00' }}
+                                            {{ purchase.price_final_formatted || 'R$ 0,00' }}
                                         </span>
                                         <span class="text-sm text-gray-600">Valor Final</span>
                                     </div>
@@ -287,7 +283,7 @@
                     <h3 class="text-gray-600 font-medium text-lg mb-2">Nenhuma compra encontrada</h3>
                     <p class="text-gray-500 mb-6">Crie a primeira compra do seu grupo</p>
                     <button 
-                        @click="isCreateNewModal = true"
+                        @click="isCreatePurchaseModal = true"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
                     >
                         Criar Primeira Compra
@@ -349,6 +345,5 @@
         </div>
     </main>
 
-    <!-- Modal (Keep exactly as it is) -->
-    <CreateNewModal v-model="isCreateNewModal" />
+    <CreatePurchaseModal v-model="isCreatePurchaseModal" />
 </template>

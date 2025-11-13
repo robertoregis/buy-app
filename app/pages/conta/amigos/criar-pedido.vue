@@ -1,13 +1,11 @@
 <script setup lang="ts">
   import { useParams } from '../../../stores/params.js';
   import { collection, getDocs, query, where,
-    getCountFromServer, getDoc, doc, updateDoc, Timestamp, orderBy,
+    getCountFromServer, orderBy,
     limit,startAt, limitToLast, endAt
   } from 'firebase/firestore';
   import { useFirebase } from '../../../composables/useFirebase';
   import { useAuthentication } from '../../../stores/authentication';
-  import { convertDateFirestore } from '../../../composables/convert.js';
-  import { createFriendRequest } from '../../../composables/firebaseDocs.js';
 
   const params = useParams();
   definePageMeta({
@@ -25,7 +23,6 @@
   const search = ref<any>('')
   const router = useRouter();
   const usersFound = ref<any[]>([])
-  const usersAdded = ref<any[]>([])
   const isCreateFriendRequest = ref<boolean>(false);
   const usersFormData = ref<any>({})
   const loadedSearch = ref<boolean>(false);
@@ -123,9 +120,6 @@
     isCreateFriendRequest.value = true;
   }
 
-  onMounted(() => {
-    //router.push(`/`)
-  })
   
 </script>
 

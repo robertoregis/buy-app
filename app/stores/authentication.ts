@@ -9,7 +9,9 @@ export interface InterfaceShow {
     profileId: string,
     group: object,
     codePurchase: string | null,
-    friends: object[]
+    friends: object[],
+    countWarnings: number,
+    countFriendRequests: number,
 }
 
 export const useAuthentication = defineStore('authentication', {
@@ -22,7 +24,9 @@ export const useAuthentication = defineStore('authentication', {
         profileId: '',
         group: {},
         codePurchase: '',
-        friends: []
+        friends: [],
+        countWarnings: 0,
+        countFriendRequests: 0,
     }),
     actions: {
         setToken(dataToken: string) {
@@ -51,6 +55,12 @@ export const useAuthentication = defineStore('authentication', {
         },
         setFriends(dataFriends: object[]) {
             this.friends = dataFriends
+        },
+        setCountWarnings(dataCountWarnings: number) {
+            this.countWarnings = dataCountWarnings
+        },
+        setCountFriendRequests(dataCountFriendRequests: number) {
+            this.countFriendRequests = dataCountFriendRequests
         }
     },
     getters: {
@@ -80,6 +90,15 @@ export const useAuthentication = defineStore('authentication', {
         },
         getFriends(): object[] {
             return this.friends
+        },
+        getCountWarnings(): number {
+            return this.countWarnings
+        },
+        getCountFriendRequests(): number {
+            return this.countFriendRequests
+        },
+        getCountTotalMenu(): number {
+            return this.countFriendRequests
         }
     }
 })

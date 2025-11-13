@@ -33,11 +33,20 @@
                 purchase.value = purchaseDoc;
                 authentication.setCodePurchase(purchase.value.code)
                 getItens()
+                console.log(1)
+                loading.value = false;
             }
         });
     }
 
     const getItens = async () => {
+        if (!purchase.value.purchase_final_id) {
+            console.warn("purchase_final_id não está disponível para buscar itens.");
+            // Se não tiver o ID final, desative o loading para evitar o loop
+            loading.value = false;
+            totalResult.value = 0; // Garante que o contador é 0
+            return;
+        }
         try {
             // Query base para contagem
             const countQuery = query(
@@ -56,9 +65,9 @@
                 id: doc.id,
                 ...doc.data()
             }))
-            loading.value = false
         } catch (error) {
             console.error(error)
+            console.log(error)
         } finally {
             loading.value = false
         }
@@ -87,12 +96,11 @@
                     <h3 class="text-xl font-semibold text-blue-600">Detalhes da Compra</h3>
                 </div>
             </div>
-
             <!-- Loading State -->
             <div v-if="loading" class="flex justify-center items-center p-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
-
+            
             <!-- Content -->
             <div v-else class="space-y-6">
                 <!-- Info Cards -->
@@ -107,9 +115,9 @@
                                 <span class="text-gray-600 font-medium">Nome:</span>
                                 <span class="text-gray-800 font-semibold">{{ purchase.name || '—' }}</span>
                             </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <div class="flex flex-col py-2 border-b border-gray-100">
                                 <span class="text-gray-600 font-medium">Descrição:</span>
-                                <span class="text-gray-800 font-semibold text-right">{{ purchase.description || '—' }}</span>
+                                <span class="text-gray-800 font-semibold">{{ purchase.description || '—' }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <span class="text-gray-600 font-medium">Versão:</span>
@@ -117,7 +125,19 @@
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <span class="text-gray-600 font-medium">Preço Total:</span>
-                                <span class="text-xl font-bold text-green-600">{{ purchase.final_price_formatted || '—' }}</span>
+                                <span class="text-xl font-bold text-green-600">{{ purchase.price_final_formatted || '—' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="text-gray-600 font-medium">Preço Final No Caixa:</span>
+                                <span class="text-xl font-bold text-green-600">{{ purchase.price_real_final || '—' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="text-gray-600 font-medium">Data Final:</span>
+                                <span class="text-gray-800 font-semibold">{{ convertDateFirestore(purchase.execute_date) || '—' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="text-gray-600 font-medium">Preço Planejada:</span>
+                                <span class="text-xl font-bold text-green-600">{{ purchase.price_planned_formatted || '—' }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <span class="text-gray-600 font-medium">Data Planejada:</span>
@@ -235,7 +255,7 @@
                                         <span class="text-lg">{{ purchaseItens.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) }}</span>
                                     </div>
                                     <div class="col-span-4 sm:col-span-2 md:col-span-4 text-right">
-                                        <span class="text-xl text-green-600">{{ purchase.final_price_formatted || '—' }}</span>
+                                        <span class="text-xl text-green-600">{{ purchase.price_final_formatted || '—' }}</span>
                                     </div>
                                 </div>
                             </div>

@@ -40,6 +40,10 @@
       }
     ])
 
+    const clear = () => {
+        formdata.value = []
+    }
+
     // Função para adicionar um novo item (objeto) ao array
     const addNewItem = () => {
         formdata.value.push({
@@ -324,7 +328,9 @@
                     purchase.value.purchase_planned_id,
                     Number(totalAmount.value) || 0,
                     parseFloat(String(totalPrice.value).replace(",", ".")) || 0,
-                    purchase.value.purchase_geral_id
+                    purchase.value.purchase_geral_id,
+                    purchase.value.members,
+                    purchase.value.name
                 ).
                     then(() => {
                         router.push(`/conta/compras/${purchase.value.id}/exibir`)
@@ -479,7 +485,6 @@
                     Faça o planejamento da sua compra até antes do momento da sua execução.
                 </p>
             </div>
-
             <!-- Online Members -->
             <div v-if="onlineMembersList.length > 0" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
                 <div class="flex items-center justify-between">
@@ -540,14 +545,13 @@
             <!-- Action Buttons -->
             <div class="flex justify-center space-x-4">
                 <NuxtLink 
-                    v-if="purchase.is_execute" 
                     :to="`/conta/compras/${route.params.purchaseId}/exibir`" 
                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
                 >
                     Exibir Compra
                 </NuxtLink>
                 <NuxtLink 
-                    v-if="!purchase.is_execute && canUserEdit" 
+                    v-if="!purchase.is_execute && canUserEdit && purchase.is_planned" 
                     :to="`/conta/compras/${route.params.purchaseId}/executar`" 
                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
                 >
@@ -621,7 +625,7 @@
                                 </div>
                                 
                                 <!-- Delete Button -->
-                                <div v-if="!purchase.is_execute && !purchase.is_in_progress" 
+                                <div v-if="!purchase.is_execute && !purchase.is_in_progress && !purchase.is_planned" 
                                      class="absolute top-2 right-2 transition-opacity duration-200">
                                     <button 
                                         @click.prevent="removeItem(index, item)" 
@@ -637,25 +641,36 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div v-if="!purchase.is_execute && !purchase.is_in_progress" class="flex flex-col md:flex-row md:justify-between items-center pt-6 mt-6 border-t border-gray-200">
+                        <div v-if="!purchase.is_execute && !purchase.is_in_progress && !purchase.is_planned" class="flex flex-col md:flex-row md:justify-between items-center pt-6 mt-6 border-t border-gray-200">
                             <button 
                                 @click.prevent="addNewItem" 
-                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
                                 <span>Adicionar Item</span>
                             </button>
-                            <button 
-                                @click="send" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                <span>Salvar Planejamento</span>
-                            </button>
+                            <div class="flex flex-col md:flex-row items-center">
+                                <button 
+                                    @click="clear" 
+                                    class="cursor-pointer md:mr-3 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span>Limpar campos</span>
+                                </button>
+                                <button 
+                                    @click="send" 
+                                    class="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>Salvar Planejamento</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

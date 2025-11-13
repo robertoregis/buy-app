@@ -1,10 +1,10 @@
 <script lang="ts">
   import { ref, defineComponent, watch } from 'vue';
   import { createGroup, createParticipantInGroup } from '../composables/firebaseDocs';
-  import { useAuthentication } from '#imports';
+  import { useAuthentication } from '../stores/authentication';
 
   export default defineComponent({
-    name: 'CreateNewModal',
+    name: 'CreateGroupModal',
     props: {
       modelValue: {
         type: Boolean,
@@ -95,7 +95,8 @@
         goRouter,
         formdata,
         newId,
-        send
+        send,
+        authentication
       };
     },
   });
@@ -104,75 +105,174 @@
 <template>
   <div
     v-if="isOpen"
-    class="fixed px-2 inset-0 bg-black/50 bg-opacity-50 z-100 flex justify-center items-center"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4"
     @click="handleBackdropClick"
   >
     <div
-      class="w-[600px] bg-white rounded-lg shadow-lg p-[30px] relative max-h-[90vh] overflow-hidden flex flex-col"
+      class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl relative max-h-[90vh] overflow-hidden flex flex-col transform transition-all duration-300 scale-100"
     >
       <!-- Cabeçalho do modal -->
-      <div class="text-xl font-semibold mb-2">{{ newId ? 'Editar' : 'Criar' }} grupo</div>
-
-      <!-- Conteúdo rolável do modal -->
-      <div class="overflow-y-auto flex-1">
-        <div class="grid grid-cols py-4">
-          <div class="col-span-1">
-            <div class="grid grid-cols-1">
-              <div class="col-span-1">
-                <div class="flex flex-col">
-                  <p>Preencha todos os campos</p>
-                </div>
-              </div>
-
-              <div class="col-span-1 mt-4">
-                <form action="" class="grid grid-cols-1">
-                  <div class="col-span-1">
-                    <div class="flex flex-col relative mt-1">
-                        <label v-if="formdata.name" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">Título:</label>
-                        <input v-model="formdata.name" type="text" name="" id="" placeholder="Título" class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1">
-                    </div>
-                  </div>
-                  <div class="col-span-1 mt-1">
-                    <div class="flex flex-col relative mt-1">
-                        <label v-if="formdata.description" class="absolute top-[-11px] left-[5px] text-gray-500" for="" style="z-index: 100;">Descrição:</label>
-                        <textarea v-model="formdata.description" rows="4" name="" id="" placeholder="Descrição" class="mt-1 border-2 border-gray-200 rounded bg-gray-200 py-1 pl-2 pr-1" />
-                    </div>
-                  </div>
-                  <div class="col-span-1 mt-4">
-                    <div class="flex items-center justify-end">
-                      <Button @click.prevent="send" label="Criar" color="bg-green-700" />
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
+      <div class="bg-gradient-to-r from-indigo-500 to-blue-600 p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold">{{ newId ? 'Editar' : 'Criar' }} Grupo</h2>
+            <p class="text-blue-100 text-sm mt-1">Organize suas compras em grupo</p>
           </div>
+          <button
+            class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200"
+            @click="closeModal"
+          >
+            <Icon name="mdi:close" class="text-lg text-white" />
+          </button>
         </div>
       </div>
 
-      <!-- Botão de Fechar -->
-      <button
-        class="cursor-pointer absolute top-[10px] right-[10px] text-gray-600 hover:text-gray-900"
-        @click="closeModal"
-      >
-			<Icon name="mdi:close" class="text-xl" />
-		</button>
+      <!-- Conteúdo rolável do modal -->
+      <div class="overflow-y-auto flex-1 px-6 py-6">
+        <!-- Instruções -->
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full mb-3">
+            <Icon name="mdi:account-group" class="text-indigo-600 text-xl" />
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Criar Novo Grupo</h3>
+          <p class="text-gray-500 text-sm">
+            Preencha os dados para criar um novo grupo de compras
+          </p>
+        </div>
+
+        <form class="space-y-6">
+          <!-- Nome do Grupo -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">
+              Nome do Grupo
+              <span class="text-red-500 ml-1">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                v-model="formdata.name"
+                type="text" 
+                placeholder="Ex: Família, Amigos do Trabalho, Casa..."
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white placeholder-gray-400"
+              >
+              <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <Icon name="mdi:tag" class="text-gray-400 text-lg" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Descrição -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">
+              Descrição
+              <span class="text-red-500 ml-1">*</span>
+            </label>
+            <textarea 
+              v-model="formdata.description"
+              rows="4" 
+              placeholder="Descreva o propósito deste grupo..."
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white placeholder-gray-400 resize-none"
+            />
+          </div>
+
+          <!-- Informações do Criador -->
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Icon name="mdi:account" class="text-green-600 text-lg" />
+              </div>
+              <div>
+                <p class="text-gray-600 font-medium">Criador do Grupo</p>
+                <p class="text-gray-800 font-semibold">{{ authentication.user.name }}</p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer com Botões -->
+      <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+        <div class="flex items-center justify-end space-x-4">
+          <button
+            @click="closeModal"
+            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+          >
+            Cancelar
+          </button>
+          <button
+            @click.prevent="send"
+            class="px-8 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-semibold shadow-sm hover:shadow-md flex items-center space-x-2"
+          >
+            <Icon name="mdi:account-plus" class="text-lg" />
+            <span>{{ newId ? 'Atualizar' : 'Criar' }} Grupo</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-  /* Animação suave */
-  @keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+/* Animações */
+@keyframes fadeIn {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.95);
   }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
 
-  div[v-cloak] {
-    display: none;
+@keyframes slideIn {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-20px);
   }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
 
-  div.fixed {
-    animation: fadeIn 0.3s ease-in-out;
-  }
+.fixed {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.fixed > div {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Scrollbar customizada */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: #9CA3AF;
+  opacity: 1;
+}
+
+/* Focus states */
+input:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
 </style>

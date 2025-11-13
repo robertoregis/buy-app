@@ -1,8 +1,7 @@
 <script setup lang="ts">
     import { useParams } from '../../../../../stores/params.js';
     import { useAuthentication } from '../../../../../stores/authentication.js';
-    // Importações atualizadas: onSnapshot para real-time. Removi getDocs/getCountFromServer aqui
-    import { doc, onSnapshot, getDoc, query, orderBy, collection, deleteDoc } from "firebase/firestore";
+    import { doc, onSnapshot, query, orderBy, collection, deleteDoc } from "firebase/firestore";
     import { useFirebase } from "../../../../../composables/useFirebase";
     import { saveItem, deleteItem, finishedPurchase, initExecutePurchase } from '../../../../../composables/firebaseDocs.js';
 
@@ -28,7 +27,6 @@
     // Listener 2 (Novo): Para o documento de Compra
     let unsubscribePurchase = ref<any>(null)
 
-    // O formdata agora é um array de objetos (contém todos os itens de todos os usuários)
     const formdata = ref<any[]>([
       {
         name: null,
@@ -38,10 +36,7 @@
       }
     ])
 
-    // Filtro para saber se o item pertence ao usuário logado
     const isMyItem = (item: any) => {
-        // Se não tem ID (é novo), pertence a quem está digitando.
-        // Se tem ID, pertence ao criado_por
         return !item.id || item.created_by === authentication.user.id;
     }
 
@@ -114,9 +109,11 @@
     });
 
     const totalPrice = computed(() => {
+        console.log(formdata.value)
         return formdata.value.reduce((total, item) => {
             const price = parseNumber(item.price);
             const amount = parseNumber(item.amount);
+            console.log(`total: ${total}, price: ${price} e amount: ${amount}`)
             return total + price * amount;
         }, 0);
     });
@@ -288,6 +285,8 @@
                 purchase.value.purchase_final_id, 
                 purchase.value.purchase_geral_id,
                 authentication.user.id, // Passa o ID do usuário que está iniciando
+                purchase.value.members,
+                purchase.value.name
             ).
                 then(() => {
                     // Após iniciar, o listener de purchase (getPurchase) já vai atualizar
@@ -300,7 +299,7 @@
 
     const finishPurchase = async() => {
         try {
-            await savedItens(); // Salva antes de finalizar, para garantir
+            await savedItens(false); // Salva antes de finalizar, para garantir
 
             await finishedPurchase(
                 authentication.group.id, 
@@ -324,7 +323,7 @@
         }
     }
 
-    const savedItens = async() => {
+    const savedItens = async (isClear: boolean) => {
         // Filtra para garantir que só estou tentando salvar itens que me pertencem
         const myItemsToSave = formdata.value.filter(item => isMyItem(item));
 
@@ -366,7 +365,9 @@
                 type: 'success'
             })
 
-            formdata.value = []
+            if(isClear) {
+                formdata.value = []
+            }
             getItens()
         } catch (error) {
             console.error("Erro ao finalizar/salvar a compra:", error);
@@ -427,7 +428,7 @@
                     v-if="!purchase.is_in_progress"
                     @click="execute()"
                     label="Iniciar Execução"
-                    color="bg-purple-600 hover:bg-purple-700"
+                    color="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm"
                 />
             </div>
 
@@ -646,7 +647,7 @@
                         >
                             <button 
                                 @click.prevent="addNewItem" 
-                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -656,8 +657,8 @@
                             
                             <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                                 <button 
-                                    @click.prevent="savedItens()" 
-                                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                    @click.prevent="savedItens(true)" 
+                                    class="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -666,7 +667,7 @@
                                 </button>
                                 <button 
                                     @click.prevent="finishPurchase()" 
-                                    class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                                    class="cursor-pointer bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
