@@ -122,11 +122,11 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-4xl">
+    <main class="container mx-auto px-2 lg:px-4 max-w-4xl">
         <div class="space-y-8">
             <!-- Header -->
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-bold text-gray-800">Meus Avisos</h2>
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Meus Avisos</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Fique por dentro de tudo através dos avisos
                 </p>
@@ -140,11 +140,11 @@
             <!-- Content -->
             <div v-else class="space-y-6">
                 <!-- warnings Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                     <div 
                         v-for="warning in warnings" 
                         :key="warning.id"
-                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 group"
+                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 group"
                     >
                         <!-- Warning Header -->
                         <div class="flex items-start justify-between mb-4">
@@ -169,7 +169,7 @@
                 <!-- Empty State -->
                 <div v-if="warnings.length === 0" class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                     <div class="text-gray-400 mb-4">
-                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
@@ -184,13 +184,13 @@
                             <button 
                                 v-if="currentPage > 1"
                                 @click="changeGetWarnings(false, 1)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Icon name="mdi:arrow-left" class="text-xl" />
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
                                 <Icon name="mdi:arrow-left" class="text-xl" />
                             </div>
@@ -206,13 +206,13 @@
                             <button 
                                 v-if="nextPage"
                                 @click="changeGetWarnings(false, 2)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                             >
                                 <Icon name="mdi:arrow-right" class="text-xl" />
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
                                 <Icon name="mdi:arrow-right" class="text-xl" />
                             </div>

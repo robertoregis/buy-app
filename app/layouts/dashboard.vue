@@ -97,7 +97,7 @@
             <!-- Logo e Título -->
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center shadow-md">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                 </div>
@@ -116,7 +116,7 @@
                     @click="navigation('/conta/amigos')"
                     class="cursor-pointer relative flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
-                    <Icon name="mdi:account-group" class="text-lg" />
+                    <Icon name="mdi:account-multiple-check" class="text-lg" />
                     <span class="text-sm font-medium">Amigos</span>
                     <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-2px] right-[-2px] p-2 w-[20px] h-[20px] rounded-full bg-green-500 flex justify-center items-center">
                         <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>
@@ -142,7 +142,6 @@
                 </button>
 
                 <button
-                    v-if="params.routeCurrent !== 'groups' && Object.keys(authentication.group || {}).length"
                     @click="goGroups"
                     class="cursor-pointer flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm"
                 >
@@ -170,7 +169,7 @@
             <!-- Mobile Menu Button -->
             <button 
                 @click="isMobileMenuOpen = !isMobileMenuOpen"
-                class="relative lg:hidden flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200"
+                class="relative lg:hidden flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200"
             >
                 <Icon 
                     :name="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" 
@@ -192,7 +191,7 @@
                     @click="navigation('/conta/amigos')"
                     class="cursor-pointer relative w-full flex items-center space-x-3 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all duration-200 text-white"
                 >
-                    <Icon name="mdi:account-group" class="text-xl" />
+                    <Icon name="mdi:account-multiple-check" class="text-xl" />
                     <span class="font-medium">Amigos</span>
                     <div v-if="authentication.countFriendRequests > 0" class="absolute top-[-2px] right-[-2px] p-2 w-[20px] h-[20px] rounded-full bg-orange-500 flex justify-center items-center">
                         <span class="font-bold inline-block align-middle">{{ authentication.countFriendRequests }}</span>

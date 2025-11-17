@@ -29,6 +29,11 @@
       friends: [],
       friend_requests_sent: [],
       friend_requests_received: [],
+      totalItems: 0,
+      totalGroups: 0,
+      totalPurchases: 0,
+      totalFriends: 0,
+      totalRequestsFriend: 0,
       created_at: now,
       updated_at: now,
       last_login: null
@@ -58,6 +63,8 @@
       members: data.members ?? [],
       is_active: true,
       is_closed: false,
+      totalItems: 0,
+      totalPurchases: 0,
       created_at: now,
       updated_at: now,
     })
@@ -125,6 +132,7 @@
         is_active: true,
         is_execute: false,
         is_planned: false,
+        totalItems: 0,
         created_at: now,
         updated_at: now,
         is_everyone_allowed: data.is_everyone_allowed ?? true
@@ -177,6 +185,7 @@
         is_planned: false,
         members: [userId],
         group_id: groupId,
+        totalItems: 0,
         purchase_group_id: purchaseRef.id,
         created_at: now,
         updated_at: now

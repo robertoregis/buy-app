@@ -179,11 +179,11 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-6xl">
+    <main class="container mx-auto px2 lg:px-4 max-w-6xl">
         <div class="space-y-8">
             <!-- Header -->
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-bold text-gray-800">Detalhes do Grupo</h2>
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Detalhes do Grupo</h2>
                 <p class="text-gray-600">Gerencie compras e participantes do seu grupo</p>
             </div>
 
@@ -299,7 +299,7 @@
                             @click="isCreatePurchaseModal = true"
                             class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
                             <span>Criar Nova Compra</span>
@@ -345,7 +345,7 @@
                                     
                                     <!-- Indicator -->
                                     <div class="flex-shrink-0">
-                                        <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </div>
@@ -370,7 +370,7 @@
                             @click="isAddParticipant = true"
                             class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                             </svg>
                             <span>Adicionar Participante</span>

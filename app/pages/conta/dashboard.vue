@@ -209,7 +209,7 @@ onBeforeMount(() => {
             <!-- Main Content Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Última Compra -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-xl font-bold text-gray-800">Última Compra</h3>
                         <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
@@ -238,7 +238,7 @@ onBeforeMount(() => {
                             <div v-if="lastPurchase.friendId" class="flex items-center space-x-3">
                                 <img 
                                     :src="friends.find(f => f.id === lastPurchase.friendId)?.photo" 
-                                    class="w-10 h-10 rounded-full border-2 border-gray-200"
+                                    class="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200"
                                 />
                                 <div>
                                     <p class="font-medium text-gray-800">{{ friends.find(f => f.id === lastPurchase.friendId)?.name }}</p>
@@ -265,7 +265,7 @@ onBeforeMount(() => {
                 </div>
 
                 <!-- Último Amigo -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-xl font-bold text-gray-800">Último Amigo</h3>
                         <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
@@ -278,7 +278,7 @@ onBeforeMount(() => {
                             <img 
                                 :src="lastFriend.photo" 
                                 alt="Foto do Amigo" 
-                                class="w-16 h-16 rounded-full border-2 border-purple-200"
+                                class="w-10 h-10 lg:w-16 lg:h-16 rounded-full border-2 border-purple-200"
                             />
                             <div class="flex-1">
                                 <h4 class="text-lg font-semibold text-gray-800">{{ lastFriend.name }}</h4>
@@ -313,7 +313,7 @@ onBeforeMount(() => {
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-6">Ações Rápidas</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <NuxtLink 

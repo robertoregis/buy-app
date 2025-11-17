@@ -192,11 +192,11 @@
 </script>
 
 <template>
-  <main class="container mx-auto px-4 max-w-6xl">
+  <main class="container mx-auto px2 lg:px-4 max-w-6xl">
     <div class="space-y-8">
       <!-- Header -->
       <div class="text-center space-y-3">
-        <h2 class="text-3xl font-bold text-gray-800">Pedidos de Amizade</h2>
+        <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Pedidos de Amizade</h2>
         <p class="text-gray-600 max-w-2xl mx-auto">
           Gerencie os pedidos de amizade recebidos
         </p>
@@ -206,9 +206,9 @@
       <div class="flex justify-center">
         <NuxtLink 
           to="/conta/amigos/criar-pedido" 
-          class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
           </svg>
           <span>Enviar Pedido de Amizade</span>
@@ -222,11 +222,11 @@
 
       <!-- Friend Requests Grid -->
       <div v-else class="space-y-6">
-        <div v-if="friendRequests.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="friendRequests.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <div 
             v-for="friendRequest in friendRequests" 
             :key="friendRequest.id"
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-all duration-200"
           >
             <!-- User Info -->
             <div class="flex items-center space-x-4 mb-4">
@@ -234,13 +234,13 @@
                 <img 
                   :src="friendRequest.userThey.image_url || 'https://firebasestorage.googleapis.com/v0/b/buy-app-8c9ec.firebasestorage.app/o/avatar.png?alt=media&token=ae2cef95-b633-491a-9394-4723e541e8e2'" 
                   :alt="friendRequest.userThey.name"
-                  class="w-16 h-16 rounded-full border-2 border-gray-200"
+                  class="w-10 h-10 lg:w-16 lg:h-16 rounded-full border-2 border-gray-200"
                 />
                 <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
               </div>
               
               <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-gray-800 text-lg truncate">
+                <h3 class="font-bold text-gray-800 text-base md:text-lg truncate">
                   {{ friendRequest.userThey.name }}
                 </h3>
                 <p class="text-gray-500 text-sm truncate">
@@ -287,7 +287,7 @@
         <!-- Empty State -->
         <div v-else class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
           <div class="text-gray-400 mb-4">
-            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
             </svg>
           </div>
@@ -309,24 +309,24 @@
               <button 
                 v-if="currentPage > 1"
                 @click="changeGetFriendRequests(false, 1)"
-                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
               </button>
               <div 
                 v-else
-                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
               </div>
 
               <!-- Current Page -->
               <div class="px-4 py-2">
-                <span class="text-gray-700 font-semibold">
+                <span class="text-sm lg:text-base text-gray-700 font-semibold">
                   Página {{ currentPage }}
                 </span>
               </div>
@@ -335,17 +335,17 @@
               <button 
                 v-if="nextPage"
                 @click="changeGetFriendRequests(false, 2)"
-                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
               </button>
               <div 
                 v-else
-                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
               </div>

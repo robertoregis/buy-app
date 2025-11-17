@@ -177,7 +177,7 @@
           <!-- Informações do Criador -->
           <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Icon name="mdi:account" class="text-green-600 text-lg" />
               </div>
               <div>

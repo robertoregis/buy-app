@@ -98,7 +98,7 @@ export default defineComponent({
             <img 
               :src="participant.image_url || 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=User'" 
               :alt="participant.name"
-              class="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+              class="w-20 h-20 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg"
             >
             <div class="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
           </div>

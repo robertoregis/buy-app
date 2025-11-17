@@ -87,12 +87,12 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-6xl">
+    <main class="container mx-auto px-2 lg:px-4 max-w-6xl">
         <div class="space-y-6">
             <!-- Header Section -->
             <div class="text-center space-y-3">
                 <div class="space-y-1">
-                    <h2 class="text-3xl font-bold text-gray-800">{{ purchase.name }}</h2>
+                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">{{ purchase.name }}</h2>
                     <h3 class="text-xl font-semibold text-blue-600">Detalhes da Compra</h3>
                 </div>
             </div>
@@ -106,7 +106,7 @@
                 <!-- Info Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Purchase Details Card -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 lg:p-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">
                             Informações da Compra
                         </h3>
@@ -160,7 +160,7 @@
                     </div>
 
                     <!-- Actions Card -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 lg:p-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">
                             Ações
                         </h3>
@@ -169,14 +169,14 @@
                                 <NuxtLink 
                                     v-if="purchase.status === 'open'"  
                                     :to="`/conta/compras/${purchase.id}/planejar`" 
-                                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
                                 >
                                     📝 Planejar Compra
                                 </NuxtLink>
                                 <NuxtLink 
                                     v-else-if="purchase.status === 'planned' || purchase.status === 'in_execute'" 
                                     :to="`/conta/compras/${purchase.id}/executar`" 
-                                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-center"
                                 >
                                     🛒 Executar Compra
                                 </NuxtLink>
@@ -192,7 +192,7 @@
 
                 <!-- Products Section -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-6">
+                    <div class="p-3 lg:p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-xl font-bold text-gray-800">Produtos</h3>
                             <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
@@ -263,7 +263,7 @@
                             <!-- Empty State -->
                             <div v-else class="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                                 <div class="text-gray-400 mb-3">
-                                    <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-8V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v1M9 7h6"/>
                                     </svg>
                                 </div>
@@ -276,7 +276,7 @@
                         <template v-else>
                             <div class="text-center py-12 bg-orange-50 rounded-lg border border-orange-200">
                                 <div class="text-orange-400 mb-3">
-                                    <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
                                 </div>

@@ -147,7 +147,7 @@ export default defineComponent({
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Icon name="mdi:account-group" class="text-blue-600 text-lg" />
               </div>
               <div>
@@ -156,7 +156,7 @@ export default defineComponent({
               </div>
             </div>
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Icon name="mdi:account-multiple" class="text-green-600 text-lg" />
               </div>
               <div>
@@ -253,20 +253,20 @@ export default defineComponent({
       </div>
 
       <!-- Footer com Botão -->
-      <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
-        <div class="flex items-center justify-end space-x-4">
+      <div class="border-t border-gray-200 px-3 py-2 lg:px-6 lg:py-4 bg-gray-50">
+        <div class="flex items-center justify-between lg:justify-end space-x-4">
           <button
             @click="closeModal"
-            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+            class="px-4 py-1.5 lg:px-8 lg:py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
           >
-            Cancelar
+            <span class="text-sm lg:text-base">Cancelar</span>
           </button>
           <button
             @click.prevent="send"
-            class="px-8 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-semibold shadow-sm hover:shadow-md flex items-center space-x-2"
+            class="px-4 py-1.5 lg:px-8 lg:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-semibold shadow-sm hover:shadow-md flex items-center space-x-2"
           >
-            <Icon name="mdi:check" class="text-lg" />
-            <span>{{ newId ? 'Atualizar' : 'Criar' }} Compra</span>
+            <Icon name="mdi:check" class="text-base lg:text-lg" />
+            <span class="text-sm lg:text-base">{{ newId ? 'Atualizar' : 'Criar' }} Compra</span>
           </button>
         </div>
       </div>

@@ -473,12 +473,12 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-4xl">
+    <main class="container mx-auto px-2 lg:px-4 max-w-4xl">
         <div class="space-y-6">
             <!-- Header Section -->
             <div class="text-center space-y-3">
                 <div class="space-y-1">
-                    <h2 class="text-3xl font-bold text-gray-800">Planejamento</h2>
+                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Planejamento</h2>
                     <h3 class="text-xl font-semibold text-green-600">Compra</h3>
                 </div>
                 <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -523,10 +523,10 @@
 
             <!-- Lock Warning -->
             <div v-if="currentPlanner.isLocked && currentPlanner.userId !== authentication.userId" 
-                 class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 shadow-sm">
+                 class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-2 lg:pl-4 shadow-sm">
                 <div class="flex items-start space-x-3">
                     <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <svg class="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                         </svg>
                     </div>
@@ -560,7 +560,7 @@
             </div>
 
             <!-- Totals Card -->
-            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-3 lg:p-6 border border-gray-100">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">Resumo dos Totais</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
@@ -577,7 +577,7 @@
             <!-- Items Form -->
             <div v-if="canUserEdit" class="space-y-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-6">
+                    <div class="p-3 lg:p-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-4">Itens da Compra</h3>
                         
                         <div class="space-y-4">
@@ -651,10 +651,10 @@
                                 </svg>
                                 <span>Adicionar Item</span>
                             </button>
-                            <div class="flex flex-col md:flex-row items-center">
+                            <div class="flex flex-col md:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
                                 <button 
                                     @click="clear" 
-                                    class="cursor-pointer md:mr-3 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
+                                    class="cursor-pointer bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -663,7 +663,7 @@
                                 </button>
                                 <button 
                                     @click="send" 
-                                    class="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2 mt-2 md:mt-0"
+                                    class="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

@@ -210,7 +210,7 @@ export default defineComponent({
       <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-2xl font-bold">Adicionar Participante</h2>
+            <h2 class="text-xl md:text-2xl font-bold">Adicionar Participante</h2>
             <p class="text-purple-100 text-sm mt-1">
               {{ type === 'group' ? 'Adicione membros ao seu grupo' : 'Adicione participantes a esta compra' }}
             </p>
@@ -262,7 +262,7 @@ export default defineComponent({
                   @click.prevent.stop="clear()"
                   :disabled="formdata.name.length < 1"
                   :class="[
-                    'px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2',
+                    'px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center sm:space-x-2',
                     formdata.name.length >= 1
                       ? 'bg-gray-600 hover:bg-gray-700 text-white shadow-sm hover:shadow-md'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -275,7 +275,7 @@ export default defineComponent({
                   @click.prevent.stop="getUsers()"
                   :disabled="formdata.name.length < 4"
                   :class="[
-                    'px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2',
+                    'px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center sm:space-x-2',
                     formdata.name.length >= 4
                       ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'

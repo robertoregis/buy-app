@@ -163,11 +163,11 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-4xl">
+    <main class="container mx-auto px-2 lg:px-4 max-w-4xl">
         <div class="space-y-8">
             <!-- Header -->
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-bold text-gray-800">Configurações</h2>
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Configurações</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Gerencie suas informações pessoais e preferências
                 </p>
@@ -176,16 +176,16 @@
             <!-- Profile Card -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <!-- Header do Card -->
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 lg:p-6 border-b border-gray-200">
                     <div class="flex items-center space-x-6">
                         <!-- Avatar -->
                         <div class="relative">
                             <img 
                                 :src="authentication.user.image_url || 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=User'" 
                                 :alt="authentication.user.name"
-                                class="w-20 h-20 rounded-full border-4 border-white shadow-lg"
+                                class="w-12 h-12 lg:w-20 lg:h-20 rounded-full border-2 lg:border-4 border-white shadow-lg"
                             />
-                            <div class="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                            <div class="absolute bottom-0 right-0 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-white"></div>
                         </div>
                         
                         <!-- User Info -->
@@ -206,7 +206,7 @@
                 <div class="p-6 space-y-8">
                     <!-- Editar Nome -->
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col md:flex-row items-start md:items-center md:justify-between space-y-2 md:space-y-0">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center">
                                 <Icon name="mdi:account-edit" class="text-blue-600 mr-2 text-xl" />
                                 Informações Pessoais
@@ -278,7 +278,7 @@
 
                     <!-- Alterar Senha -->
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col md:flex-row items-start md:items-center md:justify-between space-y-2 md:space-y-0">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center">
                                 <Icon name="mdi:lock-reset" class="text-orange-600 mr-2 text-xl" />
                                 Segurança

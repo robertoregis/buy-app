@@ -92,57 +92,81 @@ export default defineComponent({
 <template>
   <div
     v-if="isOpen"
-    class="fixed px-2 inset-0 bg-black/50 bg-opacity-50 z-100 flex justify-center items-center"
+    class="fixed inset-0 bg-black/50 bg-opacity-50 z-50 flex justify-center items-center p-4"
     @click="handleBackdropClick"
   >
     <div
-      class="w-[600px] bg-white rounded-lg shadow-lg p-[30px] relative max-h-[90vh] overflow-hidden flex flex-col"
+      class="w-full max-w-md bg-white rounded-2xl shadow-xl relative overflow-hidden border border-gray-200"
     >
-      <!-- Cabeçalho do modal -->
-      <div class="text-xl font-semibold mb-2">Criar pedido de amizade</div>
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-pink-700 p-6 text-center">
+        <h1 class="text-xl font-bold text-white mb-1">Solicitar Amizade</h1>
+        <p class="text-purple-100 text-sm">Convide alguém para sua rede</p>
+      </div>
 
-      <!-- Conteúdo rolável do modal -->
-      <div class="overflow-y-auto flex-1">
-        <div class="grid grid-cols py-4">
-          <div class="col-span-1">
-            <div class="grid grid-cols-1">
-              <div class="col-span-1">
-                <p>Você está perto de criar um pedido de amizade para <span class="font-[600]">{{ users.they.name }}.</span></p>
-              </div>
-              <div class="col-span-1 mt-4">
-                <div class="flex items-center justify-end">
-                  <Button @click="closeModal" label="Cancelar" color="bg-red-700" class="mr-2" />
-                  <Button @click="create" label="Criar" color="bg-green-700" />
-                </div>
-              </div>
-            </div>
+      <!-- Conteúdo -->
+      <div class="p-6">
+        <div class="text-center mb-6">
+          <div class="w-10 h-10 lg:w-16 lg:h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Icon name="mdi:account" class="text-2xl text-white" />
           </div>
+          <p class="text-gray-700">
+            Você está prestes a enviar uma solicitação de amizade para
+            <span class="font-semibold text-purple-700">{{ users.they.name }}</span>
+          </p>
+        </div>
+
+        <!-- Informações adicionais -->
+        <div class="bg-purple-50 rounded-lg p-4 mb-6">
+          <div class="flex items-center text-sm text-purple-800">
+            <Icon name="mdi:information" class="text-lg mr-2" />
+            <span>Esta pessoa poderá ver seu perfil e atividades</span>
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="flex space-x-3">
+          <button
+            @click="closeModal"
+            class="flex-1 bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 py-1 px-2 md:py-3 md:px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-95"
+          >
+            <Icon name="mdi:close" class="text-lg" />
+            <span class="text-sm lg:text-base">Cancelar</span>
+          </button>
+          
+          <button
+            @click="create"
+            class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-1 px-2 md:py-3 md:px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-95"
+          >
+            <Icon name="mdi:send" class="text-lg" />
+            <span class="text-sm lg:text-base">Enviar Pedido</span>
+          </button>
         </div>
       </div>
 
-      <!-- Botão de Fechar -->
+      <!-- Botão Fechar -->
       <button
-        class="cursor-pointer absolute top-[10px] right-[10px] text-gray-600 hover:text-gray-900"
+        class="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
         @click="closeModal"
       >
-			<Icon name="mdi:close" class="text-xl" />
-		</button>
+        <Icon name="mdi:close" class="text-xl" />
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Animação suave */
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-div[v-cloak] {
-  display: none;
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 div.fixed {
   animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Efeito de hover suave nos botões */
+button {
+  transition: all 0.2s ease-in-out;
 }
 </style>

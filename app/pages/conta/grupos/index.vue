@@ -132,11 +132,11 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-4xl">
+    <main class="container mx-auto px-2 lg:px-4 max-w-4xl">
         <div class="space-y-8">
             <!-- Header -->
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-bold text-gray-800">Meus Grupos</h2>
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Meus Grupos</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Gerencie seus grupos de compras compartilhadas
                 </p>
@@ -155,7 +155,7 @@
                         @click="isCreateGroupModal = true"
                         class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         <span>Criar Novo Grupo</span>
@@ -163,17 +163,17 @@
                 </div>
 
                 <!-- Groups Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                     <div 
                         v-for="group in groups" 
                         :key="group.id"
                         @click="goGroup(group)"
-                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
                     >
                         <!-- Group Header -->
                         <div class="flex items-start justify-between mb-4">
                             <div class="flex-1">
-                                <h3 class="font-bold text-gray-800 text-lg group-hover:text-blue-600 transition-colors line-clamp-2">
+                                <h3 class="font-bold text-gray-800 text-base md:text-lg group-hover:text-blue-600 transition-colors line-clamp-2">
                                     {{ group.name }}
                                 </h3>
                                 <p class="text-gray-500 text-sm mt-1">{{ convertDateFirestore(group.created_at) }}</p>
@@ -201,7 +201,7 @@
                             
                             <!-- CTA Arrow -->
                             <div class="text-blue-500 group-hover:text-blue-600 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </div>
@@ -212,7 +212,7 @@
                 <!-- Empty State -->
                 <div v-if="groups.length === 0" class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                     <div class="text-gray-400 mb-4">
-                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                     </div>
@@ -234,13 +234,13 @@
                             <button 
                                 v-if="currentPage > 1"
                                 @click="changeGetGroups(false, 1)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Icon name="mdi:arrow-left" class="text-xl" />
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
                                 <Icon name="mdi:arrow-left" class="text-xl" />
                             </div>
@@ -256,13 +256,13 @@
                             <button 
                                 v-if="nextPage"
                                 @click="changeGetGroups(false, 2)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                             >
                                 <Icon name="mdi:arrow-right" class="text-xl" />
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
                                 <Icon name="mdi:arrow-right" class="text-xl" />
                             </div>

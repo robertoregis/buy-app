@@ -118,11 +118,7 @@
     }
 
     const openPurchase = (purchase: any) => {
-        if(purchase.is_execute) {
-            router.push(`/conta/compras/${purchase.id}/executar`)
-        } else {
-            router.push(`/conta/compras/${purchase.id}/planejar`)
-        }
+        router.push(`/conta/compras/${purchase.id}/exibir`)
     }
 
     // Calcular economia
@@ -162,11 +158,11 @@
 </script>
 
 <template>
-    <main class="container mx-auto px-4 max-w-6xl">
+    <main class="container mx-auto px2 lg:px-4 max-w-6xl">
         <div class="space-y-8">
             <!-- Header -->
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-bold text-gray-800">Lista de Compras</h2>
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Lista de Compras</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Gerencie todas as compras do seu grupo
                 </p>
@@ -176,9 +172,9 @@
             <div class="flex justify-center">
                 <button 
                     @click="isCreatePurchaseModal = true"
-                    class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 lg:px-8 lg:py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-2"
                 >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     <span>Criar Nova Compra</span>
@@ -206,7 +202,7 @@
                         v-for="purchase in purchases" 
                         :key="purchase.id"
                         @click="openPurchase(purchase)"
-                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+                        class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
                     >
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             <!-- Purchase Info -->
@@ -276,7 +272,7 @@
                 <!-- Empty State -->
                 <div v-else class="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                     <div class="text-gray-400 mb-4">
-                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 lg:w-16 lg:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                     </div>
@@ -298,17 +294,17 @@
                             <button 
                                 v-if="currentPage > 1"
                                 @click="changeGetPurchases(false, 1)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
                             </div>
@@ -324,17 +320,17 @@
                             <button 
                                 v-if="nextPage"
                                 @click="changeGetPurchases(false, 2)"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </button>
                             <div 
                                 v-else
-                                class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
+                                class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-400"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </div>

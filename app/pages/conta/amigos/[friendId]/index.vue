@@ -14,11 +14,11 @@
 </script>
 
 <template>
-  <main class="container mx-auto px-4 max-w-4xl">
+  <main class="container mx-auto px-2 lg:px-4 max-w-4xl">
     <div class="space-y-8">
       <!-- Header -->
       <div class="text-center space-y-3">
-        <h2 class="text-3xl font-bold text-gray-800">Detalhes do Amigo</h2>
+        <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Detalhes do Amigo</h2>
         <p class="text-gray-600 max-w-2xl mx-auto">
           Informações e ações disponíveis para este amigo
         </p>
@@ -36,7 +36,7 @@
                 alt="Nome da pessoa"
                 class="w-20 h-20 rounded-full border-4 border-white shadow-lg"
               />
-              <div class="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+              <div class="absolute bottom-0 right-0 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             
             <!-- User Info -->
@@ -106,7 +106,7 @@
             <!-- Group Card -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer">
               <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
+                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
                   <span class="text-white font-bold text-sm">GC</span>
                 </div>
                 <div class="flex-1">
@@ -119,7 +119,7 @@
             <!-- Group Card -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-green-300 transition-colors cursor-pointer">
               <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
                   <span class="text-white font-bold text-sm">TF</span>
                 </div>
                 <div class="flex-1">
